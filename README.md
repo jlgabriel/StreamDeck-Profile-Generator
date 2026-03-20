@@ -1,80 +1,80 @@
 # Stream Deck Profile Generator
 
-Aplicación de escritorio (GUI + CLI) en Python que lee keybindings de simuladores de vuelo y genera archivos de perfil para Elgato Stream Deck (`.streamDeckProfile`) en **formato V3**, compatible con Stream Deck software v7.3+.
+A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
 
 ![Stream Deck Profile Generator](app/assets/icon.png)
 
 ---
 
-## Tabla de Contenidos
+## Table of Contents
 
-- [Características](#características)
-- [Simuladores Soportados](#simuladores-soportados)
-- [Dispositivos Compatibles](#dispositivos-compatibles)
-- [Requisitos](#requisitos)
-- [Instalación](#instalación)
-- [Uso](#uso)
-  - [Modo GUI](#modo-gui)
-  - [Modo CLI](#modo-cli)
-  - [Formato CSV](#formato-csv)
-- [Atajos de Teclado](#atajos-de-teclado)
-- [Formato de Teclas](#formato-de-teclas)
-- [Modos de Paginación](#modos-de-paginación)
-- [Arquitectura del Proyecto](#arquitectura-del-proyecto)
-- [Licencia](#licencia)
+- [Features](#features)
+- [Supported Simulators](#supported-simulators)
+- [Compatible Devices](#compatible-devices)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [GUI Mode](#gui-mode)
+  - [CLI Mode](#cli-mode)
+  - [CSV Format](#csv-format)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Key Format](#key-format)
+- [Pagination Modes](#pagination-modes)
+- [Project Architecture](#project-architecture)
+- [License](#license)
 
 ---
 
-## Características
+## Features
 
-- **Importar keybindings** directamente desde simuladores de vuelo
-- **Editor visual en tabla** — reordenar, renombrar, colorear y organizar teclas
-- **Controles de fuente globales** — familia, tamaño, estilo, subrayado, mostrar/ocultar títulos
-- **Color de texto por botón** con selector de color
-- **División inteligente de etiquetas** — ajuste automático de texto largo en múltiples líneas
-- **Modos de paginación** — Páginas (flechas prev/next) o Carpetas (navegación padre/hijo)
-- **Presets de dispositivos** — Stream Deck Mini, Mk2, XL y Genérico
-- **Modo CLI** para generación de perfiles por lotes o automatizada
-- **Validación de teclas** con normalización de modificadores
-- **Detección de duplicados** — identifica y marca hotkeys duplicadas
-- **Persistencia de configuración** — guarda preferencias entre sesiones
+- **Import keybindings** directly from flight simulators
+- **Visual table editor** — reorder, rename, colorize, and organize keys
+- **Global font controls** — family, size, style, underline, show/hide titles
+- **Per-button text color** with color picker
+- **Smart label splitting** — automatic text wrapping for long names across multiple lines
+- **Pagination modes** — Pages (prev/next arrows) or Folders (parent/child navigation)
+- **Device presets** — Stream Deck Mini, Mk2, XL, and Generic
+- **CLI mode** for batch or automated profile generation
+- **Key validation** with modifier normalization
+- **Duplicate detection** — identifies and marks duplicate hotkeys
+- **Settings persistence** — saves preferences between sessions
 
-## Simuladores Soportados
+## Supported Simulators
 
-| Simulador | Formato de Archivo | Detección Automática |
-|-----------|-------------------|---------------------|
-| X-Plane 12 | `.prf` (preferences) | No — selección manual del archivo |
-| Microsoft Flight Simulator 2024 | `.csv` (importar CSV) | No — selección manual del archivo |
-| Aerofly FS4 | `gc-map.mcf` | Sí — busca en Documentos |
-| Condor 3 | `controls.ini` | Sí — busca en Documentos |
+| Simulator | File Format | Auto-Detection |
+|-----------|------------|----------------|
+| X-Plane 12 | `.prf` (preferences) | No — manual file selection |
+| Microsoft Flight Simulator 2024 | `.csv` (CSV import) | No — manual file selection |
+| Aerofly FS4 | `gc-map.mcf` | Yes — searches in Documents |
+| Condor 3 | `controls.ini` | Yes — searches in Documents |
 
-### Detalles de cada parser
+### Parser Details
 
-- **X-Plane 12**: Lee archivos `.prf` y extrae las asignaciones `sim/*` con sus modificadores (CTRL, ALT, SHIFT). Convierte nombres de comando como `sim/flight_controls/flaps_up` a categorías legibles ("Flight Controls" → "Flaps Up").
+- **X-Plane 12**: Reads `.prf` files and extracts `sim/*` command bindings with modifiers (CTRL, ALT, SHIFT). Converts command names like `sim/flight_controls/flaps_up` into readable categories ("Flight Controls" → "Flaps Up").
 
-- **Aerofly FS4**: Parsea el archivo de configuración `gc-map.mcf` con estructura XML-like. Filtra únicamente las asignaciones de teclado (device ID específico) y convierte nombres CamelCase a formato legible.
+- **Aerofly FS4**: Parses the `gc-map.mcf` configuration file with XML-like structure. Filters keyboard-only bindings (specific device ID) and converts CamelCase names to readable format.
 
-- **Condor 3**: Lee archivos `controls.ini` en formato INI. Mapea códigos de tecla virtual (VK codes) a nombres estándar y clasifica comandos por categoría (controles de vuelo, vistas, instrumentos, etc.).
+- **Condor 3**: Reads `controls.ini` files in INI format. Maps virtual key codes (VK codes) to standard key names and classifies commands by category (flight controls, views, instruments, etc.).
 
-## Dispositivos Compatibles
+## Compatible Devices
 
-| Dispositivo | Grilla | Botones | Model ID |
-|-------------|--------|---------|----------|
+| Device | Grid | Buttons | Model ID |
+|--------|------|---------|----------|
 | Stream Deck Mini | 3 × 2 | 6 | 20GAI9901 |
 | Stream Deck Mk2 | 5 × 3 | 15 | 20GAA9901 |
 | Stream Deck XL | 8 × 4 | 32 | 20GAT9902 |
-| Genérico | 5 × 3 | 15 | 20GAA9901 |
+| Generic | 5 × 3 | 15 | 20GAA9901 |
 
-## Requisitos
+## Requirements
 
-- Python 3.8 o superior
-- Dependencias:
+- Python 3.8 or higher
+- Dependencies:
   ```
   ttkbootstrap>=1.10.0
   platformdirs>=3.0.0
   ```
 
-## Instalación
+## Installation
 
 ```bash
 git clone https://github.com/jlgabriel/StreamDeck-Profile-Generator.git
@@ -82,52 +82,52 @@ cd StreamDeck-Profile-Generator
 pip install -r requirements.txt
 ```
 
-## Uso
+## Usage
 
-### Modo GUI
+### GUI Mode
 
 ```bash
 python -m app
 ```
 
-El modo GUI ofrece:
-- **Barra de herramientas** con selector de dispositivo, páginas máximas, alineación de texto, modo de paginación y nombre del perfil
-- **Tabla editable** con columnas: Incluir, Orden, Nombre Original, Etiqueta, Keystroke, Categoría, Color de Texto, Split Label
-- **Menú Simulador** para importar directamente desde los simuladores soportados
-- **Menú Archivo** para abrir/guardar CSV y exportar perfiles
-- **Menú Editar** para duplicar filas, marcar duplicados y limpiar marcadores
+The GUI provides:
+- **Toolbar** with device selector, max pages, text alignment, pagination mode, and profile name
+- **Editable table** with columns: Include, Order, Original Name, Label, Keystroke, Category, Text Color, Split Label
+- **Simulator menu** to import directly from supported simulators
+- **File menu** to open/save CSV and export profiles
+- **Edit menu** to duplicate rows, mark duplicates, and clear markers
 
-### Modo CLI
+### CLI Mode
 
-Para generación por lotes sin interfaz gráfica:
+For batch generation without a graphical interface:
 
 ```bash
 python -m app --input keys.csv --output profile.streamDeckProfile --device xl
 ```
 
-#### Opciones CLI
+#### CLI Options
 
-| Opción | Descripción | Por defecto |
-|--------|-------------|-------------|
-| `--input` | Archivo CSV de entrada | — |
-| `--output` | Archivo `.streamDeckProfile` de salida | — |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--input` | Input CSV file | — |
+| `--output` | Output `.streamDeckProfile` file | — |
 | `--device` | `mini`, `mk2`, `xl`, `generic` | `xl` |
-| `--max-pages` | Máximo de páginas/carpetas (1-10) | `10` |
-| `--pagination` | `Pages` o `Folders` | `Pages` |
+| `--max-pages` | Maximum pages/folders (1-10) | `10` |
+| `--pagination` | `Pages` or `Folders` | `Pages` |
 | `--text-alignment` | `bottom`, `middle`, `top` | `middle` |
-| `--font-family` | Nombre de fuente (ej: `Arial`, `Verdana`) | Sistema |
-| `--font-size` | Tamaño de fuente en px (6-24) | `12` |
+| `--font-family` | Font name (e.g., `Arial`, `Verdana`) | System |
+| `--font-size` | Font size in px (6-24) | `12` |
 | `--font-style` | `Regular`, `Bold`, `Italic`, `Bold Italic` | — |
-| `--font-underline` | Habilitar subrayado | Desactivado |
-| `--no-show-title` | Ocultar títulos en los botones | Mostrar |
-| `--gui` | Forzar modo GUI | — |
+| `--font-underline` | Enable underline | Disabled |
+| `--no-show-title` | Hide button titles | Show |
+| `--gui` | Force GUI mode | — |
 
-#### Ejemplo completo CLI
+#### Full CLI Example
 
 ```bash
 python -m app \
-  --input mis_teclas.csv \
-  --output perfil_xplane.streamDeckProfile \
+  --input my_keys.csv \
+  --output xplane_profile.streamDeckProfile \
   --device xl \
   --max-pages 5 \
   --pagination Folders \
@@ -137,153 +137,153 @@ python -m app \
   --font-style Bold
 ```
 
-### Formato CSV
+### CSV Format
 
-El archivo CSV usa las siguientes columnas:
+The CSV file uses the following columns:
 
-| Columna | Descripción | Obligatorio |
-|---------|-------------|-------------|
-| `name` | Nombre del perfil (solo se lee de la primera fila) | No |
-| `include` | `1` para incluir, `0` para excluir | No (default: `1`) |
-| `order` | Orden numérico del botón | No (auto) |
-| `original` | Nombre original del comando en el simulador | No |
-| `label` | Etiqueta que se muestra en el botón | Sí |
-| `keystroke` | Combinación de teclas (ej: `CTRL+ALT+F1`) | Sí |
-| `category` | Categoría para organización | No |
-| `text_color` | Color hexadecimal del texto (ej: `#FFFFFF`) | No (default: `#FFFFFF`) |
-| `split_label` | `1` para dividir etiqueta en líneas, `0` para no | No (default: `1`) |
+| Column | Description | Required |
+|--------|-------------|----------|
+| `name` | Profile name (only read from the first row) | No |
+| `include` | `1` to include, `0` to exclude | No (default: `1`) |
+| `order` | Numeric button order | No (auto) |
+| `original` | Original command name from the simulator | No |
+| `label` | Label displayed on the button | Yes |
+| `keystroke` | Key combination (e.g., `CTRL+ALT+F1`) | Yes |
+| `category` | Category for organization | No |
+| `text_color` | Hex text color (e.g., `#FFFFFF`) | No (default: `#FFFFFF`) |
+| `split_label` | `1` to split label into lines, `0` to not | No (default: `1`) |
 
-#### Ejemplo CSV
+#### CSV Example
 
 ```csv
 name,include,order,original,label,keystroke,category,text_color,split_label
-Mi Perfil,1,1,sim/operation/quit,Salir,ALT+F4,Operación,#FF4444,1
-,1,2,sim/engines/throttle_up,Throttle Up,F2,Motores,#00FF00,1
-,1,3,sim/flight/flaps_down,Flaps Down,F6,Controles,#FFFFFF,1
-,0,4,sim/view/free_camera,Cámara Libre,CTRL+F9,Vistas,#FFFFFF,1
+My Profile,1,1,sim/operation/quit,Quit,ALT+F4,Operation,#FF4444,1
+,1,2,sim/engines/throttle_up,Throttle Up,F2,Engines,#00FF00,1
+,1,3,sim/flight/flaps_down,Flaps Down,F6,Controls,#FFFFFF,1
+,0,4,sim/view/free_camera,Free Camera,CTRL+F9,Views,#FFFFFF,1
 ```
 
-> La cuarta fila tiene `include=0`, por lo que será excluida del perfil exportado.
+> The fourth row has `include=0`, so it will be excluded from the exported profile.
 
-## Atajos de Teclado
+## Keyboard Shortcuts
 
-| Atajo | Acción |
-|-------|--------|
-| `Ctrl+N` | Agregar nueva fila |
-| `Ctrl+D` | Duplicar filas seleccionadas |
-| `Ctrl+A` | Seleccionar todas las filas |
-| `Ctrl+I` | Alternar inclusión (checkbox Include) |
-| `Ctrl+S` | Alternar split label |
-| `Ctrl+↑` | Mover filas hacia arriba |
-| `Ctrl+↓` | Mover filas hacia abajo |
-| `Delete` | Eliminar filas seleccionadas |
-| `Espacio` | Alternar checkboxes |
-| `F1` | Ayuda (atajos de teclado) |
-| `F2` | Editar etiqueta de la fila seleccionada |
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+N` | Add new row |
+| `Ctrl+D` | Duplicate selected rows |
+| `Ctrl+A` | Select all rows |
+| `Ctrl+I` | Toggle inclusion (Include checkbox) |
+| `Ctrl+S` | Toggle split label |
+| `Ctrl+↑` | Move rows up |
+| `Ctrl+↓` | Move rows down |
+| `Delete` | Delete selected rows |
+| `Space` | Toggle checkboxes |
+| `F1` | Help (keyboard shortcuts) |
+| `F2` | Edit selected row label |
 
-## Formato de Teclas
+## Key Format
 
-Las teclas se escriben como combinaciones de modificadores + tecla, separados por `+`:
+Keys are written as modifier + key combinations, separated by `+`:
 
 ```
-MODIFICADOR+MODIFICADOR+TECLA
+MODIFIER+MODIFIER+KEY
 ```
 
-### Modificadores válidos
+### Valid Modifiers
 
-| Modificador | Sinónimos |
-|-------------|-----------|
+| Modifier | Synonyms |
+|----------|----------|
 | `CTRL` | `CONTROL`, `CTL` |
 | `ALT` | `OPT`, `OPTION` |
 | `SHIFT` | `SHF` |
 | `WIN` | `CMD`, `COMMAND`, `META`, `SUPER` |
 
-### Teclas especiales
+### Special Keys
 
-- **Función**: `F1` a `F24`
-- **Navegación**: `UP`, `DOWN`, `LEFT`, `RIGHT`, `HOME`, `END`, `PAGEUP`, `PAGEDOWN`
-- **Edición**: `BACKSPACE`, `DELETE`, `INSERT`, `TAB`, `ENTER`, `RETURN`, `ESCAPE`, `SPACE`
-- **Numérico**: `NUM0`-`NUM9`, `NUMADD`, `NUMSUB`, `NUMMUL`, `NUMDIV`, `NUMDECIMAL`, `NUMENTER`, `NUMLOCK`
-- **Puntuación**: `COMMA`, `PERIOD`, `SEMICOLON`, `QUOTE`, `BACKQUOTE`, `MINUS`, `EQUAL`, `SLASH`, `BACKSLASH`, `LEFTBRACKET`, `RIGHTBRACKET`
-- **Letras y números**: `A`-`Z`, `0`-`9`
+- **Function**: `F1` through `F24`
+- **Navigation**: `UP`, `DOWN`, `LEFT`, `RIGHT`, `HOME`, `END`, `PAGEUP`, `PAGEDOWN`
+- **Editing**: `BACKSPACE`, `DELETE`, `INSERT`, `TAB`, `ENTER`, `RETURN`, `ESCAPE`, `SPACE`
+- **Numpad**: `NUM0`-`NUM9`, `NUMADD`, `NUMSUB`, `NUMMUL`, `NUMDIV`, `NUMDECIMAL`, `NUMENTER`, `NUMLOCK`
+- **Punctuation**: `COMMA`, `PERIOD`, `SEMICOLON`, `QUOTE`, `BACKQUOTE`, `MINUS`, `EQUAL`, `SLASH`, `BACKSLASH`, `LEFTBRACKET`, `RIGHTBRACKET`
+- **Letters and Numbers**: `A`-`Z`, `0`-`9`
 
-### Ejemplos
+### Examples
 
 ```
-CTRL+C              → Copiar
-CTRL+ALT+DELETE     → Ctrl+Alt+Supr
+CTRL+C              → Copy
+CTRL+ALT+DELETE     → Ctrl+Alt+Delete
 SHIFT+F5            → Shift+F5
-WIN+CTRL+LEFT       → Win+Ctrl+Izquierda
-F12                 → Tecla sola sin modificadores
+WIN+CTRL+LEFT       → Win+Ctrl+Left
+F12                 → Single key without modifiers
 ```
 
-## Modos de Paginación
+## Pagination Modes
 
-### Modo Páginas (Pages)
+### Pages Mode
 
-Crea múltiples páginas con botones de navegación **prev/next**:
-- Se reservan **2 botones por página** para navegación (flechas)
-- La primera página tiene solo flecha "siguiente"
-- La última página tiene solo flecha "anterior"
-- Máximo 10 páginas
+Creates multiple pages with **prev/next** navigation buttons:
+- Reserves **2 buttons per page** for navigation (arrows)
+- First page has only a "next" arrow
+- Last page has only a "previous" arrow
+- Maximum 10 pages
 
-### Modo Carpetas (Folders)
+### Folders Mode
 
-Crea una estructura de carpetas con navegación **padre/hijo**:
-- La primera página usa todos los botones disponibles
-- Las páginas adicionales reservan **1 botón** para volver
-- Desde la página principal se accede a las subcarpetas
-- Más eficiente en uso de espacio que el modo Páginas
+Creates a folder structure with **parent/child** navigation:
+- First page uses all available buttons
+- Additional pages reserve **1 button** to go back
+- Subfolders are accessed from the main page
+- More space-efficient than Pages mode
 
-## Arquitectura del Proyecto
+## Project Architecture
 
 ```
 StreamDeck-Profile-Generator/
 ├── app/
-│   ├── __main__.py            # Punto de entrada: args CLI + lanzador GUI
-│   ├── ui_main.py             # Ventana principal GUI (ttkbootstrap)
-│   ├── keys.py                # Validación y normalización de teclas
+│   ├── __main__.py            # Entry point: CLI args + GUI launcher
+│   ├── ui_main.py             # Main GUI window (ttkbootstrap)
+│   ├── keys.py                # Key validation and normalization
 │   ├── export/
-│   │   └── streamdeck.py      # Constructor de perfiles V3 + exportador ZIP
+│   │   └── streamdeck.py      # V3 profile builder + ZIP exporter
 │   ├── readers/
-│   │   ├── base.py            # Clase base SimBindingReader
-│   │   ├── xplane_prf.py      # Parser de X-Plane 12 (.prf)
-│   │   ├── aerofly.py         # Reader de Aerofly FS4
-│   │   ├── aerofly_parser.py  # Parser de Aerofly (gc-map.mcf)
-│   │   ├── condor.py          # Reader de Condor 3
-│   │   └── condor_parser.py   # Parser de Condor (controls.ini)
-│   └── assets/                # Iconos de la aplicación (ico, icns, png)
+│   │   ├── base.py            # SimBindingReader base class
+│   │   ├── xplane_prf.py      # X-Plane 12 parser (.prf)
+│   │   ├── aerofly.py         # Aerofly FS4 reader
+│   │   ├── aerofly_parser.py  # Aerofly parser (gc-map.mcf)
+│   │   ├── condor.py          # Condor 3 reader
+│   │   └── condor_parser.py   # Condor parser (controls.ini)
+│   └── assets/                # App icons (ico, icns, png)
 ├── requirements.txt
 ├── LICENSE
 ├── CLAUDE.md
 └── README.md
 ```
 
-### Flujo de datos
+### Data Flow
 
 ```
-Simulador (.prf, .mcf, .ini)
+Simulator (.prf, .mcf, .ini)
         │
         ▼
-   readers/*          ← Parsean y normalizan bindings
+   readers/*          ← Parse and normalize bindings
         │
         ▼
-   keys.py            ← Validan y normalizan keystrokes
+   keys.py            ← Validate and normalize keystrokes
         │
         ▼
-   ui_main.py         ← Editor visual en tabla (o CSV vía CLI)
+   ui_main.py         ← Visual table editor (or CSV via CLI)
         │
         ▼
-   export/streamdeck.py  ← Genera perfil V3 (.streamDeckProfile)
+   export/streamdeck.py  ← Generate V3 profile (.streamDeckProfile)
         │
         ▼
-   Archivo ZIP         ← package.json + manifests + estructura de páginas
+   ZIP file           ← package.json + manifests + page structure
 ```
 
-## Autor
+## Author
 
-Desarrollado por **Juan Luis Gabriel** ([@jlgabriel](https://github.com/jlgabriel))
+Developed by **Juan Luis Gabriel** ([@jlgabriel](https://github.com/jlgabriel))
 
-## Licencia
+## License
 
 [MIT](LICENSE) - Copyright (c) 2026 Juan Luis Gabriel
