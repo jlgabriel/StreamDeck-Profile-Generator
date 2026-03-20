@@ -280,6 +280,10 @@ Simulador (.prf, .mcf, .ini)
    Archivo ZIP         ← package.json + manifests + estructura de páginas
 ```
 
+## Autor
+
+Desarrollado por **Juan Luis Gabriel** ([@jlgabriel](https://github.com/jlgabriel))
+
 ## Licencia
 
-[MIT](LICENSE)
+[MIT](LICENSE) - Copyright (c) 2026 Juan Luis Gabriel
