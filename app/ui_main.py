@@ -134,7 +134,7 @@ class MainWindow(ttk.Window):
         # Help shortcut
         self.bind_all("<F1>", lambda e: self.show_keyboard_shortcuts())
         # Space toggles Include/Split depending on focused/last clicked column
-        self.bind_all("<space>", self.on_space_toggle)
+        self.tree.bind("<space>", self.on_space_toggle)
         self._last_tree_column = None
 
         # Readability improvement and row/entry height
@@ -194,8 +194,14 @@ class MainWindow(ttk.Window):
         condor3.add_separator()
         condor3.add_command(label="Set controls.ini path…", command=self.open_sim_paths_dialog)
 
-        # MSFS 2024 (simple)
-        msfs2024_label = "MSFS 2024"
+        # MSFS 2024
+        msfs2024 = ttk.Menu(simmenu, tearoff=0)
+        msfs2024.add_command(label="Auto-detect & Import", command=self.auto_detect_msfs2024)
+        msfs2024.add_separator()
+        msfs2024.add_command(label="Import XML (saved path)", command=self.import_msfs2024_from_saved)
+        msfs2024.add_command(label="Import XML… (browse)", command=self.import_msfs2024_xml)
+        msfs2024.add_separator()
+        msfs2024.add_command(label="Set XML path…", command=self.open_sim_paths_dialog)
 
         # X-Plane 12 submenu
         xp12 = ttk.Menu(simmenu, tearoff=0)
@@ -208,7 +214,7 @@ class MainWindow(ttk.Window):
         entries = [
             ("Aerofly FS4", af4),
             ("Condor 3", condor3),
-            (msfs2024_label, None),
+            ("MSFS 2024", msfs2024),
             ("X-Plane 12", xp12),
         ]
         for label, submenu in sorted(entries, key=lambda t: t[0].lower()):
@@ -225,8 +231,9 @@ class MainWindow(ttk.Window):
         help_menu.add_command(label="Keyboard shortcuts…", command=self.show_keyboard_shortcuts)
         help_menu.add_separator()
         help_menu.add_command(label="Keystroke format…", command=self.show_keystroke_help)
+        from . import __version__
         help_menu.add_command(label="About…", command=lambda: messagebox.showinfo(APP_TITLE,
-            "Stream Deck Profile Generator\nComunidad – MIT\n\nCSV → .streamDeckProfile con paginado y presets."))
+            f"Stream Deck Profile Generator v{__version__}\nMIT License\n\nhttps://github.com/jlgabriel/StreamDeck-Profile-Generator"))
         menubar.add_cascade(label="Help", menu=help_menu)
 
         self.config(menu=menubar)
@@ -251,13 +258,6 @@ class MainWindow(ttk.Window):
         self.text_alignment = ttk.Combobox(bar, values=["bottom", "middle", "top"], width=8, state="readonly")
         self.text_alignment.set("middle")  # Default to middle as preferred
         self.text_alignment.pack(side=LEFT)
-
-        # Add pagination mode selector after text alignment
-        ttk.Label(bar, text="Pagination:").pack(side=LEFT, padx=8)
-        self.pagination_mode = ttk.Combobox(bar, values=["Pages", "Folders"], width=8, state="readonly")
-        self.pagination_mode.set("Pages")  # Default to Pages mode
-        self.pagination_mode.pack(side=LEFT)
-        self.pagination_mode.bind("<<ComboboxSelected>>", lambda e: self.update_capacity_label())
 
         ttk.Label(bar, text="Profile name:").pack(side=LEFT, padx=8)
         self.profile_entry = ttk.Entry(bar, width=30)
@@ -300,9 +300,6 @@ class MainWindow(ttk.Window):
         ToolTip(self.device, "Device preset (Mini/MK2/XL) to calculate grid and pagination.")
         ToolTip(self.max_pages, "Maximum pages to generate for this profile.")
         ToolTip(self.text_alignment, "Global text alignment for all buttons: top, middle, or bottom.")
-        ToolTip(self.pagination_mode,
-                "Pages: Up to 10 pages with automatic navigation buttons\n"
-                "Folders: Unlimited nested folders for complex layouts")
         ToolTip(self.profile_entry, "Profile name (used on each page).")
         ToolTip(btn_add, "Add a row (action) at the end. (Ctrl+N)")
         ToolTip(btn_del, "Delete selected row(s). Use Ctrl+Click for multiple selection, Shift+Click for range. (Delete key, Ctrl+A to select all, Escape to clear selection)")
@@ -1174,7 +1171,6 @@ NOTES:
                 device=self.device.get(),
                 max_pages=int(self.max_pages.get()),
                 text_alignment=self.text_alignment.get(),
-                pagination_mode=self.pagination_mode.get(),
                 font_family=self.font_family.get(),
                 font_size=int(self.font_size.get()),
                 font_style=self.font_style.get(),
@@ -1196,24 +1192,19 @@ NOTES:
         grid_size = preset["cols"] * preset["rows"]
         max_pages = int(self.max_pages.get())
 
-        # Calculate capacity based on pagination mode
-        pagination_mode = self.pagination_mode.get()
-        if pagination_mode == "Pages":
-            # Pages mode: reserve 2 buttons per page for navigation
-            buttons_per_page = grid_size - 2 if max_pages > 1 else grid_size
-            capacity = buttons_per_page * min(max_pages, 10)  # Pages limited to 10
-            mode_info = f"Pages mode (max 10)"
+        # Nav buttons: first/last page use 1 slot, middle pages use 2
+        capped_pages = min(max_pages, 10)
+        if capped_pages <= 1:
+            capacity = grid_size
+        elif capped_pages == 2:
+            capacity = (grid_size - 1) * 2
         else:
-            # Folders mode: first page full, others reserve 1 for back button
-            first_page = grid_size
-            other_pages = (grid_size - 1) * (max_pages - 1) if max_pages > 1 else 0
-            capacity = first_page + other_pages
-            mode_info = f"Folders mode"
+            capacity = (grid_size - 1) * 2 + (grid_size - 2) * (capped_pages - 2)
 
         included = sum(1 for iid in self.tree.get_children("") if self.tree.set(iid, "include"))
 
         self.capacity_lbl.configure(
-            text=f"Capacity: {included}/{capacity}  |  Grid {preset['cols']}×{preset['rows']} × {max_pages} {mode_info}"
+            text=f"Capacity: {included}/{capacity}  |  Grid {preset['cols']}×{preset['rows']} × {max_pages} Pages mode (max 10)"
         )
 
     def update_selection_status(self):
@@ -1520,7 +1511,7 @@ NOTES:
         """Check if file looks like Aerofly FS 4 config"""
         try:
             with open(path, "r", encoding="utf-8", errors="ignore") as f:
-                content = f.read(1000)
+                content = f.read(20000)
                 return "tmcontroller_configuration" in content and "tmchannelmap" in content
         except:
             return False
@@ -1717,6 +1708,106 @@ NOTES:
 
         except Exception as e:
             messagebox.showerror(APP_TITLE, f"Error importing Condor: {e}")
+
+    # ── MSFS 2024 ──────────────────────────────────────────────
+
+    def auto_detect_msfs2024(self):
+        """Auto-detect MSFS 2024 inputprofile XML."""
+        try:
+            from .readers.msfs2024 import Reader
+            reader = Reader()
+            path = reader.detect_install()
+            if path:
+                if messagebox.askyesno(APP_TITLE,
+                    f"Found MSFS 2024 profile:\n{path}\n\nImport it?"):
+                    self._import_msfs2024_common(str(path))
+            else:
+                messagebox.showinfo(APP_TITLE,
+                    "Could not auto-detect MSFS 2024 inputprofile.\n\n"
+                    "Use 'Import XML… (browse)' to select the file manually.")
+        except Exception as e:
+            messagebox.showerror(APP_TITLE, f"Error detecting MSFS 2024: {e}")
+
+    def import_msfs2024_from_saved(self):
+        """Import MSFS 2024 XML from saved path."""
+        path = self.get_sim_path("msfs2024")
+        if not path:
+            messagebox.showinfo(APP_TITLE, "No saved path for MSFS 2024. Use 'Set XML path…' first.")
+            return
+        if not os.path.isfile(path):
+            messagebox.showwarning(APP_TITLE, "Saved path is not a file. Please set it again.")
+            return
+        self._import_msfs2024_common(path)
+
+    def import_msfs2024_xml(self):
+        """Browse and import MSFS 2024 inputprofile XML."""
+        base = self.get_sim_path("msfs2024")
+        initialdir = os.path.dirname(base) if base and os.path.isfile(base) else (base if base and os.path.isdir(base) else None)
+
+        path = filedialog.askopenfilename(
+            title="Select MSFS 2024 Inputprofile XML",
+            filetypes=[("XML files", "*.xml"), ("All files", "*.*")],
+            initialdir=initialdir,
+        )
+        if not path:
+            return
+        self._import_msfs2024_common(path)
+
+    def _import_msfs2024_common(self, path: str):
+        """Common import logic for MSFS 2024 XML."""
+        try:
+            from .readers.msfs2024_parser import parse_msfs2024_xml
+            rows = parse_msfs2024_xml(path)
+
+            if not rows:
+                messagebox.showwarning(APP_TITLE,
+                    "No keyboard bindings found in this XML file.\n\n"
+                    "Make sure you export the keyboard inputprofile from MSFS 2024.")
+                return
+
+            # Replace or append
+            if self.tree.get_children(""):
+                if messagebox.askyesno(APP_TITLE,
+                    "Replace current rows with MSFS 2024 bindings?\n\nYes = Replace\nNo = Append"):
+                    for iid in self.tree.get_children(""):
+                        self.tree.delete(iid)
+
+            start = len(self.tree.get_children("")) + 1
+            invalid = 0
+
+            for j, r in enumerate(rows, start=start):
+                ks = r["keystroke"]
+                tag = ()
+
+                try:
+                    ks = normalize_keystroke(ks) if ks else ""
+                except Exception:
+                    if ks:
+                        tag = ("invalid",)
+                        invalid += 1
+
+                self.tree.insert("", "end", values=(
+                    "✓" if r["include"] else "",
+                    j, r["original"], r["label"], ks,
+                    r["category"], r["text_color"],
+                    "✓" if r.get("split_label", True) else ""
+                ), tags=tag)
+
+            # Update profile name
+            base = os.path.splitext(os.path.basename(path))[0]
+            self.profile_entry.delete(0, END)
+            self.profile_entry.insert(0, f"MSFS 2024 Import ({base})")
+
+            self.renumber_orders()
+            self.update_capacity_label()
+
+            note = f"Imported {len(rows)} keyboard bindings from MSFS 2024."
+            if invalid:
+                note += f" {invalid} need review."
+            self.status.configure(text=note)
+
+        except Exception as e:
+            messagebox.showerror(APP_TITLE, f"Error importing MSFS 2024: {e}")
 
 def run_gui(args=None):
     app = MainWindow(args)

@@ -28,8 +28,20 @@ Thumbs.db
 .claude/settings.local.json
 
 # Generated/old profiles
-New examples/
 *.streamDeckProfile
+
+# Example/test folders (local only)
+New examples/
+examples/
+csv_export_tests/
+imported profiles in streamdeck/
+msfs2024 keybinding export/
+AFS4 keybinding/
+Condor 3 keybinding/
+xp12 keybinding/
+
+# Backups
+*_backup_*.zip
 
 # Conda
 environment.yml

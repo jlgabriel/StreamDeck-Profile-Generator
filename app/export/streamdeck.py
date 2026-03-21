@@ -52,10 +52,8 @@ VK_CODES = {
 
 # Plugin definitions for V3 format
 PLUGIN_HOTKEY = {"Name": "Activate a Key Command", "UUID": "com.elgato.streamdeck.system.hotkey", "Version": "1.0"}
-PLUGIN_FOLDER = {"Name": "Create Folder", "UUID": "com.elgato.streamdeck.profile.openchild", "Version": "1.0"}
 PLUGIN_PAGE_NEXT = {"Name": "Pages", "UUID": "com.elgato.streamdeck.page", "Version": "1.0"}
 PLUGIN_PAGE_PREV = {"Name": "Pages", "UUID": "com.elgato.streamdeck.page", "Version": "1.0"}
-PLUGIN_BACK = {"Name": "Back To Parent", "UUID": "com.elgato.streamdeck.profile.backtoparent", "Version": "1.0"}
 
 
 def generate_uuid_v4() -> str:
@@ -159,14 +157,14 @@ class Action:
             "ActionID": self.action_id,
             "LinkedTitle": True,
             "Name": self.name,
-            "Resources": None,
-            "Settings": self.settings,
-            "State": 0,
-            "States": [self._build_state()],
-            "UUID": self.action_uuid
         }
         if self.plugin:
             result["Plugin"] = self.plugin
+        result["Resources"] = None
+        result["Settings"] = self.settings
+        result["State"] = 0
+        result["States"] = [self._build_state()]
+        result["UUID"] = self.action_uuid
         return result
 
 
@@ -216,17 +214,6 @@ class HotkeyAction(Action):
         return state
 
 
-class FolderAction(Action):
-    def __init__(self, profile):
-        super().__init__(
-            name="Create Folder",
-            action_uuid="com.elgato.streamdeck.profile.openchild",
-            title=profile.name,
-            settings={"ProfileUUID": profile.uuid},
-            plugin=PLUGIN_FOLDER
-        )
-
-
 class NextPageAction(Action):
     def __init__(self):
         super().__init__(
@@ -244,18 +231,6 @@ class PreviousPageAction(Action):
             plugin=PLUGIN_PAGE_PREV
         )
 
-
-class ParentFolderAction(Action):
-    def __init__(self):
-        super().__init__(
-            name="Parent Folder",
-            action_uuid="com.elgato.streamdeck.profile.backtoparent",
-            plugin=PLUGIN_BACK
-        )
-
-
-class BackAction(ParentFolderAction):
-    pass
 
 
 # ---- Profile & StreamDeckProfile ----
@@ -381,28 +356,52 @@ def _export_with_pages(items, out_path, profile_name, preset, device,
                        max_pages, text_alignment, font_settings):
     cols = preset["cols"]
     rows_per_page = preset["rows"]
-    buttons_per_page = (cols * rows_per_page) - 2  # reserve 2 for nav
+    total_slots = cols * rows_per_page
 
-    total_pages = min(max_pages, max(1, (len(items) + buttons_per_page - 1) // buttons_per_page))
+    # Navigation: reserve bottom-left for Prev, bottom-right for Next
+    # First page: no Prev, has Next → capacity = total_slots - 1
+    # Middle pages: Prev + Next → capacity = total_slots - 2
+    # Last page: Prev, no Next → capacity = total_slots - 1
+    # Single page: no nav → capacity = total_slots
+    if len(items) <= total_slots:
+        total_pages = 1
+    else:
+        first_cap = total_slots - 1
+        mid_cap = total_slots - 2
+        last_cap = total_slots - 1
+        remaining = len(items) - first_cap
+        if remaining <= last_cap:
+            total_pages = 2
+        else:
+            remaining -= last_cap
+            total_pages = 2 + max(0, (remaining + mid_cap - 1) // mid_cap)
+
+    total_pages = min(total_pages, max_pages)
 
     page_profiles = []
     page_uuids = []
+    item_offset = 0
 
     for page_num in range(total_pages):
         page_uuid = generate_uuid_v4()
         page_uuids.append(page_uuid)
 
-        start_idx = page_num * buttons_per_page
-        page_items = items[start_idx:start_idx + buttons_per_page]
+        has_prev = total_pages > 1 and page_num > 0
+        has_next = total_pages > 1 and page_num < total_pages - 1
+        nav_count = (1 if has_prev else 0) + (1 if has_next else 0)
+        page_capacity = total_slots - nav_count
+
+        page_items = items[item_offset:item_offset + page_capacity]
+        item_offset += len(page_items)
 
         actions_grid = []
         item_idx = 0
         for row_idx in range(rows_per_page):
             actions_row = []
             for col_idx in range(cols):
-                if (col_idx, row_idx) == (0, rows_per_page - 1) and total_pages > 1:
+                if (col_idx, row_idx) == (0, rows_per_page - 1) and has_prev:
                     actions_row.append(PreviousPageAction())
-                elif (col_idx, row_idx) == (cols - 1, rows_per_page - 1) and total_pages > 1:
+                elif (col_idx, row_idx) == (cols - 1, rows_per_page - 1) and has_next:
                     actions_row.append(NextPageAction())
                 elif item_idx < len(page_items):
                     actions_row.append(_make_hotkey(page_items[item_idx], text_alignment, font_settings))
@@ -415,78 +414,18 @@ def _export_with_pages(items, out_path, profile_name, preset, device,
         page_profile.uuid = page_uuid
         page_profiles.append(page_profile)
 
+    # Default page must be empty — content pages go in Pages array.
+    # Stream Deck shows Pages array as pages 1, 2, 3...
+    empty_default = Profile(name=profile_name, actions=[])
+    all_page_uuids = [empty_default.uuid] + page_uuids
+
     sd_profile = StreamDeckProfile(
-        main_profile=page_profiles[0],
-        additional_profiles=page_profiles[1:],
+        main_profile=empty_default,
+        additional_profiles=page_profiles,
         device=device,
         profile_name=profile_name,
-        page_uuids=page_uuids
+        page_uuids=all_page_uuids
     )
-    sd_profile.save(out_path)
-
-
-def _export_with_folders(items, out_path, profile_name, preset, device,
-                         max_pages, text_alignment, font_settings):
-    cols = preset["cols"]
-    rows_per_page = preset["rows"]
-    total_slots = cols * rows_per_page
-
-    if len(items) <= total_slots:
-        _export_single_page(items, out_path, profile_name, preset, device,
-                            text_alignment, font_settings)
-        return
-
-    main_page_capacity = total_slots - 1
-    other_page_capacity = total_slots - 1
-
-    main_page_items = items[:main_page_capacity]
-    remaining_items = items[main_page_capacity:]
-
-    folder_profiles = []
-    folder_num = 0
-
-    while remaining_items and folder_num < max_pages - 1:
-        folder_items = remaining_items[:other_page_capacity]
-        remaining_items = remaining_items[other_page_capacity:]
-
-        folder_grid = []
-        item_idx = 0
-        for row_idx in range(rows_per_page):
-            actions_row = []
-            for col_idx in range(cols):
-                if (col_idx, row_idx) == (0, 0):
-                    actions_row.append(ParentFolderAction())
-                elif item_idx < len(folder_items):
-                    actions_row.append(_make_hotkey(folder_items[item_idx], text_alignment, font_settings))
-                    item_idx += 1
-                else:
-                    actions_row.append(None)
-            folder_grid.append(actions_row)
-
-        folder_profile = Profile(name=f"{profile_name} - Page {folder_num + 2}", actions=folder_grid)
-        folder_profiles.append(folder_profile)
-        folder_num += 1
-
-    main_grid = []
-    item_idx = 0
-    for row_idx in range(rows_per_page):
-        actions_row = []
-        for col_idx in range(cols):
-            if (col_idx, row_idx) == (cols - 1, rows_per_page - 1) and folder_profiles:
-                actions_row.append(FolderAction(folder_profiles[0]))
-            elif item_idx < len(main_page_items):
-                actions_row.append(_make_hotkey(main_page_items[item_idx], text_alignment, font_settings))
-                item_idx += 1
-            else:
-                actions_row.append(None)
-        main_grid.append(actions_row)
-
-    if len(folder_profiles) > 1:
-        for i in range(len(folder_profiles) - 1):
-            folder_profiles[i].actions[rows_per_page - 1][cols - 1] = FolderAction(folder_profiles[i + 1])
-
-    main_profile = Profile(name=profile_name, actions=main_grid)
-    sd_profile = StreamDeckProfile(main_profile, folder_profiles, device=device, profile_name=profile_name)
     sd_profile.save(out_path)
 
 
@@ -519,7 +458,6 @@ def export_profile(
     device: str = "xl",
     max_pages: int = 1,
     text_alignment: str = "middle",
-    pagination_mode: str = "Pages",
     font_family: str = "",
     font_size: int = 12,
     font_style: str = "",
@@ -540,9 +478,5 @@ def export_profile(
         "show_title": show_title,
     }
 
-    if pagination_mode == "Pages":
-        _export_with_pages(items, out_path, profile_name, preset, device,
-                           max_pages, text_alignment, font_settings)
-    else:
-        _export_with_folders(items, out_path, profile_name, preset, device,
-                             max_pages, text_alignment, font_settings)
+    _export_with_pages(items, out_path, profile_name, preset, device,
+                       max_pages, text_alignment, font_settings)

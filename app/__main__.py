@@ -6,15 +6,6 @@ from .ui_main import run_gui
 from .export.streamdeck import export_profile
 
 
-def _normalize_pagination(val: str) -> str:
-    v = (val or "").strip().lower()
-    if v in ("pages", "p"):
-        return "Pages"
-    if v in ("folders", "f"):
-        return "Folders"
-    raise argparse.ArgumentTypeError("pagination must be 'Pages' or 'Folders'")
-
-
 def _normalize_alignment(val: str) -> str:
     v = (val or "").strip().lower()
     if v in ("bottom", "b"):
@@ -34,9 +25,7 @@ def main(argv=None):
     parser.add_argument("--device", choices=["mini","mk2","xl","generic"], default="xl",
                         help="Device preset")
     parser.add_argument("--gui", action="store_true", help="Force GUI mode")
-    parser.add_argument("--max-pages", type=int, default=10, help="Maximum pages/folders to generate")
-    parser.add_argument("--pagination", type=_normalize_pagination, default="Pages",
-                        help="Pagination mode: Pages|Folders")
+    parser.add_argument("--max-pages", type=int, default=10, help="Maximum pages to generate")
     parser.add_argument("--text-alignment", type=_normalize_alignment, default="middle",
                         help="Text alignment on keys: bottom|middle|top")
     parser.add_argument("--font-family", default="", help="Font family (e.g., Verdana, Tahoma)")
@@ -81,7 +70,6 @@ def main(argv=None):
                 device=args.device,
                 max_pages=int(args.max_pages),
                 text_alignment=args.text_alignment,
-                pagination_mode=args.pagination,
                 font_family=args.font_family,
                 font_size=args.font_size,
                 font_style=args.font_style,

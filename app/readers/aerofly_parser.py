@@ -200,8 +200,6 @@ def parse_aerofly_mcf(file_path: str) -> List[Dict]:
     if not channel_matches:
         raise Exception("No channel mappings found. Verify this is a valid Aerofly FS 4 gc-map.mcf file.")
     
-    # Debug info
-    print(f"Total channel mappings found: {len(channel_matches)}")
     
     rows = []
     processed_combinations = set()  # Avoid duplicates
@@ -219,13 +217,12 @@ def parse_aerofly_mcf(file_path: str) -> List[Dict]:
             continue  # Skip analog inputs
             
         keyboard_bindings_found += 1
-        print(f"Keyboard binding: {function_id} -> {input_id}")
         
         try:
             # Convert input to keystroke
             keystroke = convert_aerofly_input_to_keystroke(input_id)
             if not keystroke:
-                print(f"Warning: Could not convert input '{input_id}' for function '{function_id}'")
+                print(f"  Warning: Could not convert input '{input_id}' for '{function_id}'")
                 continue
             
             # Create unique combination key
@@ -261,17 +258,16 @@ def parse_aerofly_mcf(file_path: str) -> List[Dict]:
                 "keystroke": keystroke,
                 "category": category,
                 "text_color": "#FFFFFF",
-                "split_label": False
+                "split_label": True
             }
             
             rows.append(row)
             
         except Exception as e:
-            print(f"Warning: Error processing {function_id} -> {input_id}: {e}")
+            print(f"  Warning: Error processing {function_id} -> {input_id}: {e}")
             continue
     
-    print(f"Keyboard bindings processed: {keyboard_bindings_found}")
-    print(f"Valid bindings exported: {len(rows)}")
+    print(f"Aerofly FS4: parsed {len(rows)} keyboard bindings ({keyboard_bindings_found} total, {keyboard_bindings_found - len(rows)} skipped)")
     
     if not rows:
         raise Exception("No valid keyboard bindings found. This may be a hardware-only configuration.")

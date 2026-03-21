@@ -177,7 +177,7 @@ def parse_condor_controls_ini(file_path: str) -> List[Dict]:
         else:
             # Log unrecognized key codes for debugging
             invalid_keys.append((command_name, vk_code))
-            print(f"Warning: Unknown VK code {vk_code} for command '{command_name}'")
+            print(f"  Warning: Unknown VK code {vk_code} for '{command_name}'")
             continue
         
         # Create binding entry
@@ -191,19 +191,14 @@ def parse_condor_controls_ini(file_path: str) -> List[Dict]:
             "keystroke": keystroke,
             "category": category,
             "text_color": "#FFFFFF",
-            "split_label": False
+            "split_label": True
         }
         
         rows.append(row)
         processed_count += 1
     
-    print(f"Successfully processed {processed_count} keyboard bindings")
-    if invalid_keys:
-        print(f"Found {len(invalid_keys)} unrecognized key codes:")
-        for cmd, vk in invalid_keys[:5]:  # Show first 5
-            print(f"  {cmd}: VK {vk}")
-        if len(invalid_keys) > 5:
-            print(f"  ... and {len(invalid_keys) - 5} more")
+    skipped = len(invalid_keys)
+    print(f"Condor 3: parsed {processed_count} keyboard bindings ({processed_count + skipped} total, {skipped} skipped)")
     
     if not rows:
         raise Exception("No valid keyboard bindings found")

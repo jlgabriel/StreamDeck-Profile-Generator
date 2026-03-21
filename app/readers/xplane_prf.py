@@ -141,7 +141,9 @@ def parse_xplane_prf(file_path: str) -> list[dict]:
             "keystroke": keystroke,  # canonical: "SHIFT+COMMA", "CTRL+MINUS", etc.
             "category": category,    # "General", "Instruments", ...
             "text_color": "#FFFFFF",
-            "icon": "",
+            "split_label": True,
         })
 
+    skipped = len(triples) - len(rows)
+    print(f"X-Plane 12: parsed {len(rows)} keyboard bindings ({len(triples)} total, {skipped} skipped)")
     return rows

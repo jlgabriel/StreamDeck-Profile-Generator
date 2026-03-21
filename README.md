@@ -1,6 +1,6 @@
 # Stream Deck Profile Generator
 
-A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
+**v0.8.0** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
 
 ![Stream Deck Profile Generator](app/assets/icon.png)
 
@@ -19,7 +19,6 @@ A Python desktop application (GUI + CLI) that reads flight simulator keybindings
   - [CSV Format](#csv-format)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
 - [Key Format](#key-format)
-- [Pagination Modes](#pagination-modes)
 - [Project Architecture](#project-architecture)
 - [License](#license)
 
@@ -27,34 +26,35 @@ A Python desktop application (GUI + CLI) that reads flight simulator keybindings
 
 ## Features
 
-- **Import keybindings** directly from flight simulators
+- **Import keybindings** directly from flight simulators (native file formats)
 - **Visual table editor** — reorder, rename, colorize, and organize keys
 - **Global font controls** — family, size, style, underline, show/hide titles
 - **Per-button text color** with color picker
-- **Smart label splitting** — automatic text wrapping for long names across multiple lines
-- **Pagination modes** — Pages (prev/next arrows) or Folders (parent/child navigation)
+- **Smart label splitting** — automatic text wrapping for long button names
+- **Multi-page profiles** with automatic navigation buttons (up to 10 pages)
 - **Device presets** — Stream Deck Mini, Mk2, XL, and Generic
 - **CLI mode** for batch or automated profile generation
 - **Key validation** with modifier normalization
-- **Duplicate detection** — identifies and marks duplicate hotkeys
 - **Settings persistence** — saves preferences between sessions
 
 ## Supported Simulators
 
-| Simulator | File Format | Auto-Detection |
-|-----------|------------|----------------|
-| X-Plane 12 | `.prf` (preferences) | No — manual file selection |
-| Microsoft Flight Simulator 2024 | `.csv` (CSV import) | No — manual file selection |
-| Aerofly FS4 | `gc-map.mcf` | Yes — searches in Documents |
-| Condor 3 | `controls.ini` | Yes — searches in Documents |
+| Simulator | File Format | Import Method |
+|-----------|------------|---------------|
+| X-Plane 12 | `.prf` (preferences) | Manual file selection |
+| Microsoft Flight Simulator 2024 | `.xml` (inputprofile) | Auto-detect or browse |
+| Aerofly FS4 | `gc-map.mcf` | Auto-detect or browse |
+| Condor 3 | `controls.ini` | Auto-detect or browse |
 
 ### Parser Details
 
-- **X-Plane 12**: Reads `.prf` files and extracts `sim/*` command bindings with modifiers (CTRL, ALT, SHIFT). Converts command names like `sim/flight_controls/flaps_up` into readable categories ("Flight Controls" → "Flaps Up").
+- **X-Plane 12**: Reads `.prf` files and extracts `sim/*` command bindings with modifiers (CTRL, ALT, SHIFT). Converts command paths into readable categories and labels.
 
-- **Aerofly FS4**: Parses the `gc-map.mcf` configuration file with XML-like structure. Filters keyboard-only bindings (specific device ID) and converts CamelCase names to readable format.
+- **MSFS 2024**: Parses XML inputprofile files exported from the simulator. Maps Windows VK codes to standard key names, organizes by Context (ATC, Cockpit Camera, Drone, etc.), and preserves acronyms (ATC, EFB, VR, HUD) in labels.
 
-- **Condor 3**: Reads `controls.ini` files in INI format. Maps virtual key codes (VK codes) to standard key names and classifies commands by category (flight controls, views, instruments, etc.).
+- **Aerofly FS4**: Parses the `gc-map.mcf` configuration file. Filters keyboard-only bindings and converts function names to readable format with directional indicators (+/-).
+
+- **Condor 3**: Reads `controls.ini` files in INI format. Maps virtual key codes to standard key names and classifies commands by category (flight controls, views, instruments, etc.).
 
 ## Compatible Devices
 
@@ -91,11 +91,11 @@ python -m app
 ```
 
 The GUI provides:
-- **Toolbar** with device selector, max pages, text alignment, pagination mode, and profile name
+- **Toolbar** with device selector, max pages, text alignment, and profile name
+- **Font toolbar** with font family, size, style, underline, and show title controls
 - **Editable table** with columns: Include, Order, Original Name, Label, Keystroke, Category, Text Color, Split Label
 - **Simulator menu** to import directly from supported simulators
 - **File menu** to open/save CSV and export profiles
-- **Edit menu** to duplicate rows, mark duplicates, and clear markers
 
 ### CLI Mode
 
@@ -112,8 +112,7 @@ python -m app --input keys.csv --output profile.streamDeckProfile --device xl
 | `--input` | Input CSV file | — |
 | `--output` | Output `.streamDeckProfile` file | — |
 | `--device` | `mini`, `mk2`, `xl`, `generic` | `xl` |
-| `--max-pages` | Maximum pages/folders (1-10) | `10` |
-| `--pagination` | `Pages` or `Folders` | `Pages` |
+| `--max-pages` | Maximum pages (1-10) | `10` |
 | `--text-alignment` | `bottom`, `middle`, `top` | `middle` |
 | `--font-family` | Font name (e.g., `Arial`, `Verdana`) | System |
 | `--font-size` | Font size in px (6-24) | `12` |
@@ -130,10 +129,9 @@ python -m app \
   --output xplane_profile.streamDeckProfile \
   --device xl \
   --max-pages 5 \
-  --pagination Folders \
-  --text-alignment bottom \
-  --font-family "Verdana" \
-  --font-size 10 \
+  --text-alignment middle \
+  --font-family "Arial" \
+  --font-size 12 \
   --font-style Bold
 ```
 
@@ -153,18 +151,6 @@ The CSV file uses the following columns:
 | `text_color` | Hex text color (e.g., `#FFFFFF`) | No (default: `#FFFFFF`) |
 | `split_label` | `1` to split label into lines, `0` to not | No (default: `1`) |
 
-#### CSV Example
-
-```csv
-name,include,order,original,label,keystroke,category,text_color,split_label
-My Profile,1,1,sim/operation/quit,Quit,ALT+F4,Operation,#FF4444,1
-,1,2,sim/engines/throttle_up,Throttle Up,F2,Engines,#00FF00,1
-,1,3,sim/flight/flaps_down,Flaps Down,F6,Controls,#FFFFFF,1
-,0,4,sim/view/free_camera,Free Camera,CTRL+F9,Views,#FFFFFF,1
-```
-
-> The fourth row has `include=0`, so it will be excluded from the exported profile.
-
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -174,10 +160,10 @@ My Profile,1,1,sim/operation/quit,Quit,ALT+F4,Operation,#FF4444,1
 | `Ctrl+A` | Select all rows |
 | `Ctrl+I` | Toggle inclusion (Include checkbox) |
 | `Ctrl+S` | Toggle split label |
-| `Ctrl+↑` | Move rows up |
-| `Ctrl+↓` | Move rows down |
+| `Ctrl+Up` | Move rows up |
+| `Ctrl+Down` | Move rows down |
 | `Delete` | Delete selected rows |
-| `Space` | Toggle checkboxes |
+| `Space` | Toggle checkboxes (when table is focused) |
 | `F1` | Help (keyboard shortcuts) |
 | `F2` | Edit selected row label |
 
@@ -202,38 +188,11 @@ MODIFIER+MODIFIER+KEY
 
 - **Function**: `F1` through `F24`
 - **Navigation**: `UP`, `DOWN`, `LEFT`, `RIGHT`, `HOME`, `END`, `PAGEUP`, `PAGEDOWN`
-- **Editing**: `BACKSPACE`, `DELETE`, `INSERT`, `TAB`, `ENTER`, `RETURN`, `ESCAPE`, `SPACE`
-- **Numpad**: `NUM0`-`NUM9`, `NUMADD`, `NUMSUB`, `NUMMUL`, `NUMDIV`, `NUMDECIMAL`, `NUMENTER`, `NUMLOCK`
-- **Punctuation**: `COMMA`, `PERIOD`, `SEMICOLON`, `QUOTE`, `BACKQUOTE`, `MINUS`, `EQUAL`, `SLASH`, `BACKSLASH`, `LEFTBRACKET`, `RIGHTBRACKET`
+- **Editing**: `BACKSPACE`, `DELETE`, `INSERT`, `TAB`, `ENTER`, `ESCAPE`, `SPACE`
+- **Numpad**: `NUM0`-`NUM9`, `NUMPLUS`, `NUMMINUS`, `NUMMULTIPLY`, `NUMDIVIDE`, `NUMDECIMAL`, `NUMENTER`
+- **Punctuation**: `COMMA`, `PERIOD`, `SEMICOLON`, `QUOTE`, `BACKQUOTE`, `MINUS`, `EQUALS`, `SLASH`, `BACKSLASH`, `LBRACKET`, `RBRACKET`
+- **OEM**: `OEM102` (European keyboard `<>` key)
 - **Letters and Numbers**: `A`-`Z`, `0`-`9`
-
-### Examples
-
-```
-CTRL+C              → Copy
-CTRL+ALT+DELETE     → Ctrl+Alt+Delete
-SHIFT+F5            → Shift+F5
-WIN+CTRL+LEFT       → Win+Ctrl+Left
-F12                 → Single key without modifiers
-```
-
-## Pagination Modes
-
-### Pages Mode
-
-Creates multiple pages with **prev/next** navigation buttons:
-- Reserves **2 buttons per page** for navigation (arrows)
-- First page has only a "next" arrow
-- Last page has only a "previous" arrow
-- Maximum 10 pages
-
-### Folders Mode
-
-Creates a folder structure with **parent/child** navigation:
-- First page uses all available buttons
-- Additional pages reserve **1 button** to go back
-- Subfolders are accessed from the main page
-- More space-efficient than Pages mode
 
 ## Project Architecture
 
@@ -248,6 +207,8 @@ StreamDeck-Profile-Generator/
 │   ├── readers/
 │   │   ├── base.py            # SimBindingReader base class
 │   │   ├── xplane_prf.py      # X-Plane 12 parser (.prf)
+│   │   ├── msfs2024.py        # MSFS 2024 reader
+│   │   ├── msfs2024_parser.py # MSFS 2024 parser (XML inputprofile)
 │   │   ├── aerofly.py         # Aerofly FS4 reader
 │   │   ├── aerofly_parser.py  # Aerofly parser (gc-map.mcf)
 │   │   ├── condor.py          # Condor 3 reader
@@ -262,7 +223,7 @@ StreamDeck-Profile-Generator/
 ### Data Flow
 
 ```
-Simulator (.prf, .mcf, .ini)
+Simulator (.prf, .xml, .mcf, .ini)
         │
         ▼
    readers/*          ← Parse and normalize bindings

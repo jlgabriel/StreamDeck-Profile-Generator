@@ -32,6 +32,8 @@ SPECIAL_KEYS = {
     # punctuation
     "PLUS","MINUS","EQUALS","COMMA","PERIOD","SLASH","SEMICOLON",
     "QUOTE","BACKQUOTE","LBRACKET","RBRACKET","BACKSLASH",
+    # OEM
+    "OEM102",
 }
 
 # Main key synonyms (punctuation and variants)
