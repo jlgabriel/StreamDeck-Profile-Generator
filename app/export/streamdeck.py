@@ -50,6 +50,34 @@ VK_CODES = {
     'NUMDECIMAL': 110, 'NUMENTER': 13,
 }
 
+# Qt Key Codes mapping (QTKeyCode field in Stream Deck hotkey actions)
+# Only keys where Qt code differs from VK code need to be listed here.
+# Letters (A-Z), digits (0-9), SPACE, and numpad keys use VK code directly.
+QT_KEY_CODES = {
+    # Navigation and editing — Qt::Key_* constants (0x01000000+)
+    'ESC': 16777216, 'TAB': 16777217, 'BACKSPACE': 16777219,
+    'ENTER': 16777220, 'INSERT': 16777222, 'DELETE': 16777223,
+    'HOME': 16777232, 'END': 16777233,
+    'LEFT': 16777234, 'UP': 16777235, 'RIGHT': 16777236, 'DOWN': 16777237,
+    'PAGEUP': 16777238, 'PAGEDOWN': 16777239,
+    # Function keys — Qt::Key_F1 = 0x01000030 = 16777264
+    'F1': 16777264, 'F2': 16777265, 'F3': 16777266, 'F4': 16777267,
+    'F5': 16777268, 'F6': 16777269, 'F7': 16777270, 'F8': 16777271,
+    'F9': 16777272, 'F10': 16777273, 'F11': 16777274, 'F12': 16777275,
+    'F13': 16777276, 'F14': 16777277, 'F15': 16777278, 'F16': 16777279,
+    'F17': 16777280, 'F18': 16777281, 'F19': 16777282, 'F20': 16777283,
+    'F21': 16777284, 'F22': 16777285, 'F23': 16777286, 'F24': 16777287,
+    # Punctuation — ASCII code of the character (US keyboard layout)
+    'PLUS': 43, 'EQUALS': 61, 'MINUS': 45, 'COMMA': 44, 'PERIOD': 46,
+    'SLASH': 47, 'SEMICOLON': 59, 'QUOTE': 39, 'BACKQUOTE': 96,
+    'LBRACKET': 91, 'RBRACKET': 93, 'BACKSLASH': 92,
+    # Numpad — ASCII code of the character they produce
+    'NUM0': 48, 'NUM1': 49, 'NUM2': 50, 'NUM3': 51, 'NUM4': 52,
+    'NUM5': 53, 'NUM6': 54, 'NUM7': 55, 'NUM8': 56, 'NUM9': 57,
+    'NUMPLUS': 43, 'NUMMINUS': 45, 'NUMMULTIPLY': 42, 'NUMDIVIDE': 47,
+    'NUMDECIMAL': 46, 'NUMENTER': 16777221,
+}
+
 # Plugin definitions for V3 format
 PLUGIN_HOTKEY = {"Name": "Activate a Key Command", "UUID": "com.elgato.streamdeck.system.hotkey", "Version": "1.0"}
 PLUGIN_PAGE_NEXT = {"Name": "Pages", "UUID": "com.elgato.streamdeck.page", "Version": "1.0"}
@@ -122,12 +150,17 @@ def parse_hotkey(hotkey_str: str) -> List[Dict]:
     if not main_key:
         main_key = 'A'
 
+    # Numpad keys need Qt::KeypadModifier (0x4000 = 16384)
+    if main_key.startswith('NUM'):
+        key_modifiers |= 16384
+
     vkey_code = VK_CODES.get(main_key, 65)
+    qt_key_code = QT_KEY_CODES.get(main_key, vkey_code)
 
     hotkey_obj = {
         "KeyCmd": key_cmd, "KeyCtrl": key_ctrl, "KeyModifiers": key_modifiers,
         "KeyOption": key_alt, "KeyShift": key_shift,
-        "NativeCode": vkey_code, "QTKeyCode": vkey_code, "VKeyCode": vkey_code
+        "NativeCode": vkey_code, "QTKeyCode": qt_key_code, "VKeyCode": vkey_code
     }
     return [hotkey_obj, placeholder, placeholder, placeholder]
 
