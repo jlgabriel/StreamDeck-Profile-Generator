@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## Project Overview
-Stream Deck Profile Generator v0.8.1 — a Python GUI + CLI tool that reads flight simulator keybindings and generates Elgato Stream Deck profile files (.streamDeckProfile) in V3 format (compatible with Stream Deck software v7.3+).
+Stream Deck Profile Generator v0.8.2 — a Python GUI + CLI tool that reads flight simulator keybindings and generates Elgato Stream Deck profile files (.streamDeckProfile) in V3 format (compatible with Stream Deck software v7.3+).
 
 ## Tech Stack
 - **Python 3.8+** with `ttkbootstrap` (themed tkinter) for the GUI
@@ -16,6 +16,21 @@ python -m app
 # CLI mode
 python -m app --input keys.csv --output profile.streamDeckProfile --device xl
 ```
+
+## Building Standalone EXE
+```bash
+# Requires PyInstaller
+pip install pyinstaller
+
+# Build (output: dist/StreamDeckProfileGenerator.exe)
+pyinstaller StreamDeckProfileGenerator.spec --noconfirm
+
+# Or use the batch script
+build.bat
+```
+- Entry point wrapper: `run.py` (avoids relative import issues)
+- Config: `StreamDeckProfileGenerator.spec` (--onefile, --windowed, hidden imports for ttkbootstrap)
+- User settings stored in `%LOCALAPPDATA%/Community/StreamDeckProfileGen/` (not bundled)
 
 ## Project Structure
 ```

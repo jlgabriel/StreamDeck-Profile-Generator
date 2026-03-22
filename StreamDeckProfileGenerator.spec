@@ -1,0 +1,67 @@
+# -*- mode: python ; coding: utf-8 -*-
+
+block_cipher = None
+
+a = Analysis(
+    ['run.py'],
+    pathex=[],
+    binaries=[],
+    datas=[],
+    hiddenimports=[
+        'ttkbootstrap',
+        'ttkbootstrap.constants',
+        'ttkbootstrap.style',
+        'ttkbootstrap.themes',
+        'ttkbootstrap.colorutils',
+        'ttkbootstrap.themes.standard',
+        'ttkbootstrap.themes.user',
+        'ttkbootstrap.localization',
+        'ttkbootstrap.icons',
+        'ttkbootstrap.dialogs',
+        'ttkbootstrap.toast',
+        'ttkbootstrap.tooltip',
+        'ttkbootstrap.scrolled',
+        'ttkbootstrap.tableview',
+        'ttkbootstrap.widgets',
+        'ttkbootstrap.window',
+        'ttkbootstrap.publisher',
+        'ttkbootstrap.validation',
+        'tkinter',
+        'tkinter.font',
+        'tkinter.filedialog',
+        'tkinter.messagebox',
+        'tkinter.colorchooser',
+        'platformdirs',
+    ],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='StreamDeckProfileGenerator',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='app/assets/icon.ico',
+)

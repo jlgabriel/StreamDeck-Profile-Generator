@@ -1,6 +1,6 @@
 # Stream Deck Profile Generator
 
-**v0.8.1** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
+**v0.8.2** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
 
 ![Stream Deck Profile Generator](app/assets/icon.png)
 
@@ -20,6 +20,7 @@
 - [Keyboard Shortcuts](#keyboard-shortcuts)
 - [Key Format](#key-format)
 - [Project Architecture](#project-architecture)
+- [Building a Standalone EXE](#building-a-standalone-exe)
 - [License](#license)
 
 ---
@@ -215,6 +216,9 @@ StreamDeck-Profile-Generator/
 │   │   └── condor_parser.py   # Condor parser (controls.ini)
 │   └── assets/                # App icons (ico, icns, png)
 ├── requirements.txt
+├── run.py                       # PyInstaller entry point
+├── StreamDeckProfileGenerator.spec  # PyInstaller build config
+├── build.bat                    # Windows build script
 ├── LICENSE
 ├── CLAUDE.md
 └── README.md
@@ -240,6 +244,38 @@ Simulator (.prf, .xml, .mcf, .ini)
         ▼
    ZIP file           ← package.json + manifests + page structure
 ```
+
+## Building a Standalone EXE
+
+You can build a standalone Windows executable that doesn't require Python installed:
+
+### Prerequisites
+
+```bash
+pip install pyinstaller
+```
+
+### Build
+
+Run the build script:
+
+```bash
+build.bat
+```
+
+Or manually:
+
+```bash
+pyinstaller StreamDeckProfileGenerator.spec --noconfirm
+```
+
+The executable will be generated at `dist/StreamDeckProfileGenerator.exe` (~26 MB).
+
+### Notes
+
+- The EXE is a single-file portable executable — no installation needed
+- User settings are stored in `%LOCALAPPDATA%/Community/StreamDeckProfileGen/` and are not bundled with the EXE
+- `build/` and `dist/` directories are excluded from version control
 
 ## Author
 
