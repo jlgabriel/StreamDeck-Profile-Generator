@@ -277,6 +277,10 @@ The executable will be generated at `dist/StreamDeckProfileGenerator.exe` (~26 M
 - User settings are stored in `%LOCALAPPDATA%/Community/StreamDeckProfileGen/` and are not bundled with the EXE
 - `build/` and `dist/` directories are excluded from version control
 
+## Known Issues
+
+- **Punctuation key display**: Some punctuation keys (`BACKQUOTE`, `SLASH`, `SEMICOLON`, `QUOTE`, `EQUALS`, `LBRACKET`, `RBRACKET`, `BACKSLASH`) may show incorrect symbols in the Stream Deck shortcut field on non-US keyboard layouts. **The hotkeys still function correctly** — this is a display-only issue caused by how Stream Deck renders key codes based on the active keyboard layout.
+
 ## Acknowledgments
 
 This project was inspired by and builds upon ideas from:
