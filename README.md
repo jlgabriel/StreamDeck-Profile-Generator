@@ -277,6 +277,14 @@ The executable will be generated at `dist/StreamDeckProfileGenerator.exe` (~26 M
 - User settings are stored in `%LOCALAPPDATA%/Community/StreamDeckProfileGen/` and are not bundled with the EXE
 - `build/` and `dist/` directories are excluded from version control
 
+## Acknowledgments
+
+This project was inspired by and builds upon ideas from:
+
+- **[streamdeck-profile-generator](https://github.com/data-enabler/streamdeck-profile-generator)** by data-enabler — Programmatic profile generation for Elgato Stream Deck
+- **[FSProfiles](https://github.com/iadarroch/FSProfiles)** by iadarroch — MSFS controller bindings extractor and HTML report generator
+- **[CoKeAs](http://condorutill.fr)** (COndor KEy ASsignments) by condorutill.fr — Condor 3 key and joystick button definitions detector
+
 ## Author
 
 Developed by **Juan Luis Gabriel** ([@jlgabriel](https://github.com/jlgabriel))
