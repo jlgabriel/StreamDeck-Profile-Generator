@@ -1,6 +1,6 @@
 # Stream Deck Profile Generator
 
-**v0.8.2** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
+**v0.8.3** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
 
 ![Stream Deck Profile Generator](app/assets/icon.png)
 
@@ -36,6 +36,7 @@
 - **Device presets** — Stream Deck Mini, Mk2, XL, and Generic
 - **CLI mode** for batch or automated profile generation
 - **Key validation** with modifier normalization
+- **Optional category in labels** — prepend category to button labels on import (e.g., "Flaps Up" → "Flight Controls - Flaps Up")
 - **Settings persistence** — saves preferences between sessions
 
 ## Supported Simulators
@@ -93,7 +94,7 @@ python -m app
 
 The GUI provides:
 - **Toolbar** with device selector, max pages, text alignment, and profile name
-- **Font toolbar** with font family, size, style, underline, and show title controls
+- **Font toolbar** with font family, size, style, underline, show title, and include category controls
 - **Editable table** with columns: Include, Order, Original Name, Label, Keystroke, Category, Text Color, Split Label
 - **Simulator menu** to import directly from supported simulators
 - **File menu** to open/save CSV and export profiles
@@ -120,6 +121,7 @@ python -m app --input keys.csv --output profile.streamDeckProfile --device xl
 | `--font-style` | `Regular`, `Bold`, `Italic`, `Bold Italic` | — |
 | `--font-underline` | Enable underline | Disabled |
 | `--no-show-title` | Hide button titles | Show |
+| `--include-category` | Prepend category to labels | Disabled |
 | `--gui` | Force GUI mode | — |
 
 #### Full CLI Example

@@ -342,6 +342,11 @@ class MainWindow(ttk.Window):
         chk_show.pack(side=LEFT, padx=4)
         ToolTip(chk_show, "Show or hide title text on all buttons.")
 
+        self.include_category_var = ttk.BooleanVar(value=False)
+        chk_cat = ttk.Checkbutton(font_bar, text="Include Category", variable=self.include_category_var)
+        chk_cat.pack(side=LEFT, padx=(12, 4))
+        ToolTip(chk_cat, "Prepend category to display label when importing.\nE.g. 'Flaps Up' → 'Flight Controls - Flaps Up'")
+
     def _build_table(self):
         # container for tree + horizontal scrollbar
         container = ttk.Frame(self)
@@ -878,6 +883,7 @@ class MainWindow(ttk.Window):
                 "font_style": self.font_style.get(),
                 "font_underline": self.font_underline_var.get(),
                 "show_title": self.show_title_var.get(),
+                "include_category": self.include_category_var.get(),
             }
             data = {**self.settings, "col_widths": col_widths, "font": font}
             with open(self._settings_path(), "w", encoding="utf-8") as f:
@@ -897,6 +903,8 @@ class MainWindow(ttk.Window):
             self.font_underline_var.set(font["font_underline"])
         if font.get("show_title") is not None:
             self.show_title_var.set(font["show_title"])
+        if font.get("include_category") is not None:
+            self.include_category_var.set(font["include_category"])
 
     def on_close(self):
         self._save_settings()
@@ -1406,6 +1414,14 @@ NOTES:
         except Exception:
             return False
 
+    def _apply_category_to_label(self, row: dict):
+        """Prepend category to label if 'Include Category' is checked."""
+        if self.include_category_var.get() and row.get("category"):
+            cat = row["category"]
+            lbl = row.get("label", "")
+            if lbl and not lbl.startswith(cat):
+                row["label"] = f"{cat} - {lbl}"
+
     def _import_xplane_common(self, path: str):
         if not self._is_likely_xp_keys_prf(path):
             if not messagebox.askyesno(APP_TITLE, "This doesn't look like a Keys.prf. Continue anyway?"):
@@ -1438,6 +1454,7 @@ NOTES:
                     if ks:
                         tag = ("invalid",); invalid += 1
 
+                self._apply_category_to_label(r)
                 self.tree.insert("", "end", values=(
                     "✓" if r["include"] else "",
                     j, r["original"], r["label"], ks,
@@ -1556,6 +1573,7 @@ NOTES:
                         tag = ("invalid",)
                         invalid += 1
 
+                self._apply_category_to_label(r)
                 self.tree.insert("", "end", values=(
                     "✓" if r["include"] else "",
                     j, r["original"], r["label"], ks,
@@ -1686,6 +1704,7 @@ NOTES:
                         tag = ("invalid",)
                         invalid += 1
 
+                self._apply_category_to_label(r)
                 self.tree.insert("", "end", values=(
                     "✓" if r["include"] else "",
                     j, r["original"], r["label"], ks,
@@ -1786,6 +1805,7 @@ NOTES:
                         tag = ("invalid",)
                         invalid += 1
 
+                self._apply_category_to_label(r)
                 self.tree.insert("", "end", values=(
                     "✓" if r["include"] else "",
                     j, r["original"], r["label"], ks,

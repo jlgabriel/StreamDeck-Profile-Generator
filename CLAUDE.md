@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## Project Overview
-Stream Deck Profile Generator v0.8.2 — a Python GUI + CLI tool that reads flight simulator keybindings and generates Elgato Stream Deck profile files (.streamDeckProfile) in V3 format (compatible with Stream Deck software v7.3+).
+Stream Deck Profile Generator v0.8.3 — a Python GUI + CLI tool that reads flight simulator keybindings and generates Elgato Stream Deck profile files (.streamDeckProfile) in V3 format (compatible with Stream Deck software v7.3+).
 
 ## Tech Stack
 - **Python 3.8+** with `ttkbootstrap` (themed tkinter) for the GUI
@@ -93,6 +93,7 @@ profile.streamDeckProfile (ZIP)
 - `text_color` is **per-button** (hex string, e.g. `#FFFFFF`)
 - `text_alignment` is global: `bottom`, `middle`, or `top`
 - `show_title` toggles visibility of all button labels
+- `include_category` (GUI checkbox / CLI flag) prepends category to label at import time (e.g. "Flaps Up" → "Flight Controls - Flaps Up"). Applied uniformly across all readers.
 - `split_label` breaks long names into multiple lines (per-button, default True)
 
 ### Device Presets

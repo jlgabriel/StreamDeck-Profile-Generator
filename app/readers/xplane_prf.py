@@ -53,7 +53,7 @@ def _split_command(command: str):
         return "Sim", command
     cat = parts[0].replace("_", " ").title()
     tail = " ".join(p.replace("_", " ").title() for p in parts[1:])
-    return cat, (f"{cat} - {tail}" if tail else cat)
+    return cat, (tail if tail else cat)
 
 # -------- main parser --------
 

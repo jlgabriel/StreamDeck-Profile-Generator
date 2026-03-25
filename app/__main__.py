@@ -34,6 +34,8 @@ def main(argv=None):
                         help="Font style")
     parser.add_argument("--font-underline", action="store_true", help="Enable underline")
     parser.add_argument("--no-show-title", action="store_true", help="Hide titles on buttons")
+    parser.add_argument("--include-category", action="store_true",
+                        help="Prepend category to display label (e.g. 'Flight Controls - Flaps Up')")
     args = parser.parse_args(argv)
 
     # CLI mode: if input and output provided and not forcing GUI
@@ -62,6 +64,13 @@ def main(argv=None):
                         "text_color": (r.get('text_color') or '#FFFFFF').strip(),
                         "split_label": str(r.get('split_label', '1')).strip() not in ('0','false','False',''),
                     })
+
+            if args.include_category:
+                for r in rows:
+                    cat = r.get("category", "")
+                    lbl = r.get("label", "")
+                    if cat and lbl and not lbl.startswith(cat):
+                        r["label"] = f"{cat} - {lbl}"
 
             export_profile(
                 rows=rows,
