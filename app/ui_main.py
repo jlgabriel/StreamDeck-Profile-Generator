@@ -9,10 +9,12 @@ from platformdirs import user_config_dir
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
+import tkinter as tk
 from tkinter import filedialog, messagebox, colorchooser, Toplevel
 
 from .export.streamdeck import export_profile, DEVICE_PRESETS
 from .keys import normalize_keystroke, KeystrokeError
+from .preview import PreviewWindow, PreviewItem
 from .readers.xplane_prf import parse_xplane_prf
 
 # ---- Simulator List ----
@@ -130,6 +132,7 @@ class MainWindow(ttk.Window):
         # Additional utility shortcuts
         self.bind_all("<F2>", lambda e: self.edit_focused_label())
         self.bind_all("<Control-n>", lambda e: self.add_row())
+        self.bind_all("<Control-p>", lambda e: self.open_preview())
 
         # Help shortcut
         self.bind_all("<F1>", lambda e: self.show_keyboard_shortcuts())
@@ -291,10 +294,13 @@ class MainWindow(ttk.Window):
         btn_color = ttk.Button(bar, text="Color…", command=self.pick_color_for_selection)
         btn_color.pack(side=LEFT, padx=6)
 
-
+        btn_preview = ttk.Button(bar, text="Preview", bootstyle=INFO, command=self.open_preview)
+        btn_preview.pack(side=LEFT, padx=6)
 
         self.btn_export = ttk.Button(bar, text="Export Profile", bootstyle=SUCCESS, command=self.export_profile_dialog)
         self.btn_export.pack(side=RIGHT)
+
+        self._preview_window = None
 
         # --- Tooltips ---
         ToolTip(self.device, "Device preset (Mini/MK2/XL) to calculate grid and pagination.")
@@ -307,6 +313,7 @@ class MainWindow(ttk.Window):
         ToolTip(btn_dn, "Move selected row(s) down. Contiguous selections move as block. (Ctrl+Down)")
         ToolTip(btn_dup, "Duplicate selected row(s). (Ctrl+D)")
         ToolTip(btn_color, "Choose text color for selected row(s).")
+        ToolTip(btn_preview, "Preview grid layout and reorder with drag & drop. (Ctrl+P)")
 
         ToolTip(self.btn_export, "Export to .streamDeckProfile ready to import in Stream Deck.")
 
@@ -1066,6 +1073,47 @@ NOTES:
                     "text_color": self.tree.set(iid, "text_color") or "#FFFFFF",
                     "split_label": 1 if self.tree.set(iid, "split_label") else 0,
                 })
+
+    # ---------------- Preview ----------------
+    def open_preview(self):
+        """Open the floating preview window."""
+        if self._preview_window is not None:
+            try:
+                self._preview_window.lift()
+                self._preview_window.focus_set()
+                return
+            except tk.TclError:
+                self._preview_window = None
+
+        # Collect included rows in visual order
+        items = []
+        for iid in self.tree.get_children(""):
+            if not self.tree.set(iid, "include"):
+                continue
+            items.append(PreviewItem(
+                iid=iid,
+                label=self.tree.set(iid, "label") or self.tree.set(iid, "original"),
+                keystroke=self.tree.set(iid, "keystroke"),
+                text_color=self.tree.set(iid, "text_color") or "#FFFFFF",
+                split_label=bool(self.tree.set(iid, "split_label")),
+            ))
+
+        if not items:
+            messagebox.showwarning("Preview", "No included rows to preview.")
+            return
+
+        preset = DEVICE_PRESETS.get(self.device.get(), DEVICE_PRESETS["generic"])
+        max_pages = int(self.max_pages.get())
+
+        self._preview_window = PreviewWindow(self, items, preset, max_pages)
+
+    def _apply_preview_order(self, new_iid_order):
+        """Reorder Treeview rows to match the preview arrangement."""
+        for new_idx, iid in enumerate(new_iid_order):
+            self.tree.move(iid, "", new_idx)
+        self.renumber_orders()
+        self.update_capacity_label()
+        self.status.configure(text=f"Preview applied: {len(new_iid_order)} buttons reordered.")
 
     # ---------------- Export ----------------
     def export_profile_dialog(self):

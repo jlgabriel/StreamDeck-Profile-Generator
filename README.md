@@ -1,6 +1,6 @@
 # Stream Deck Profile Generator
 
-**v0.8.3** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
+**v0.9.0** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
 
 ![Stream Deck Profile Generator](app/assets/icon.png)
 
@@ -37,6 +37,8 @@
 - **CLI mode** for batch or automated profile generation
 - **Key validation** with modifier normalization
 - **Optional category in labels** — prepend category to button labels on import (e.g., "Flaps Up" → "Flight Controls - Flaps Up")
+- **Visual preview window** — see your Stream Deck layout before exporting, with all pages displayed simultaneously
+- **Drag & drop reordering** — swap button positions visually in the preview grid, including across pages
 - **Settings persistence** — saves preferences between sessions
 
 ## Supported Simulators
@@ -163,6 +165,7 @@ The CSV file uses the following columns:
 | `Ctrl+A` | Select all rows |
 | `Ctrl+I` | Toggle inclusion (Include checkbox) |
 | `Ctrl+S` | Toggle split label |
+| `Ctrl+P` | Open preview window |
 | `Ctrl+Up` | Move rows up |
 | `Ctrl+Down` | Move rows down |
 | `Delete` | Delete selected rows |
@@ -204,6 +207,7 @@ StreamDeck-Profile-Generator/
 ├── app/
 │   ├── __main__.py            # Entry point: CLI args + GUI launcher
 │   ├── ui_main.py             # Main GUI window (ttkbootstrap)
+│   ├── preview.py             # Visual preview window with drag & drop
 │   ├── keys.py                # Key validation and normalization
 │   ├── export/
 │   │   └── streamdeck.py      # V3 profile builder + ZIP exporter
@@ -239,6 +243,8 @@ Simulator (.prf, .xml, .mcf, .ini)
         │
         ▼
    ui_main.py         ← Visual table editor (or CSV via CLI)
+        │
+        ├──► preview.py  ← Visual grid preview + drag & drop reorder
         │
         ▼
    export/streamdeck.py  ← Generate V3 profile (.streamDeckProfile)

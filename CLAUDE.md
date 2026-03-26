@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## Project Overview
-Stream Deck Profile Generator v0.8.3 — a Python GUI + CLI tool that reads flight simulator keybindings and generates Elgato Stream Deck profile files (.streamDeckProfile) in V3 format (compatible with Stream Deck software v7.3+).
+Stream Deck Profile Generator v0.9.0 — a Python GUI + CLI tool that reads flight simulator keybindings and generates Elgato Stream Deck profile files (.streamDeckProfile) in V3 format (compatible with Stream Deck software v7.3+).
 
 ## Tech Stack
 - **Python 3.8+** with `ttkbootstrap` (themed tkinter) for the GUI
@@ -37,6 +37,7 @@ build.bat
 app/
 ├── __main__.py            # Entry point: CLI args + GUI launcher
 ├── ui_main.py             # Main GUI window (ttkbootstrap)
+├── preview.py             # Visual preview window with drag & drop reordering
 ├── keys.py                # Keystroke validation/normalization
 ├── export/
 │   └── streamdeck.py      # V3 profile builder + ZIP export
@@ -124,6 +125,9 @@ Simulator file (.prf / .xml / .mcf / .ini / .csv)
         ▼
   ui_main.py          GUI table editor (or CLI bypasses this)
         │               → User edits labels, colors, ordering
+        │
+        ├──► preview.py Visual grid preview + drag & drop reorder
+        │               → Swap button positions, apply new order
         ▼
   export/streamdeck.py  Build V3 profile
         │               → Paginate, create actions, build manifests
@@ -155,6 +159,17 @@ All parsers output a standardized console message: `"SimName: parsed N keyboard 
 - `Profile` — single page with grid layout and manifest generation
 - `StreamDeckProfile` — top-level container, ZIP generation
 
+### Preview Window (preview.py)
+- `PreviewItem` — lightweight dataclass copy of a Treeview row (iid, label, keystroke, text_color, split_label)
+- `PreviewWindow` (Toplevel) — floating modal window showing the device grid
+  - Replicates pagination logic from `_export_with_pages()` into slot arrays
+  - All pages visible simultaneously, stacked vertically with scroll
+  - Canvas-based rendering: item cells (dark), nav button cells (gray), empty cells
+  - **Drag & drop swap**: click item → drag → release on target to swap positions
+  - Cross-page drag supported via `winfo_containing()` for root coordinate mapping
+  - **Apply**: collects items in new slot order, calls `MainWindow._apply_preview_order(iid_list)` which reorders Treeview rows via `tree.move()`
+  - Nav button slots (NAV_PREV/NAV_NEXT sentinels) are fixed and not draggable
+
 ### Keystroke Validation (keys.py)
 - `normalize_keystroke(raw, platform)` — main function
 - Parses `"MOD+MOD+KEY"` format
@@ -167,6 +182,8 @@ All parsers output a standardized console message: `"SimName: parsed N keyboard 
 - Toolbar-based controls — no complex dialogs
 - Treeview widget with editable cells (double-click)
 - Font toolbar (second row): Font, Size, Style, Underline, Show Title
+- Preview button (Ctrl+P) opens `PreviewWindow` for visual grid layout and drag & drop reordering
+- `open_preview()` collects included rows as `PreviewItem` list, `_apply_preview_order()` reorders Treeview
 - Settings persist to user config dir via `platformdirs`
 - Keyboard shortcuts for all common operations
 - `ToolTip` helper class for hover tooltips
