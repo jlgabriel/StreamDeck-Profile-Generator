@@ -19,10 +19,21 @@ _PUNCT = {
     ";":"SEMICOLON", "'":"QUOTE", "`":"BACKQUOTE", "[":"LBRACKET", "]":"RBRACKET", "\\":"BACKSLASH"
 }
 _SPECIAL = {
-    "SPACE":"SPACE","TAB":"TAB","ENTER":"ENTER","ESC":"ESC","ESCAPE":"ESC",
+    "SPACE":"SPACE","TAB":"TAB","ENTER":"ENTER","RETURN":"ENTER",
+    "ESC":"ESC","ESCAPE":"ESC",
     "BACKSPACE":"BACKSPACE","DELETE":"DELETE","INSERT":"INSERT",
     "HOME":"HOME","END":"END","PAGEUP":"PAGEUP","PAGEDOWN":"PAGEDOWN",
     "UP":"UP","DOWN":"DOWN","LEFT":"LEFT","RIGHT":"RIGHT",
+}
+
+# X-Plane Numpad tokens → internal names (matching keys.py canonical names)
+_NUMPAD = {
+    "NUMPAD-0":"NUM0","NUMPAD-1":"NUM1","NUMPAD-2":"NUM2","NUMPAD-3":"NUM3",
+    "NUMPAD-4":"NUM4","NUMPAD-5":"NUM5","NUMPAD-6":"NUM6","NUMPAD-7":"NUM7",
+    "NUMPAD-8":"NUM8","NUMPAD-9":"NUM9",
+    "NUMPAD-+":"NUMPLUS","NUMPAD--":"NUMMINUS",
+    "NUMPAD-*":"NUMMULTIPLY","NUMPAD-/":"NUMDIVIDE",
+    "NUMPAD-.":"NUMDECIMAL",
 }
 
 def _canon_key(token: str) -> str | None:
@@ -38,6 +49,8 @@ def _canon_key(token: str) -> str | None:
         return _SPECIAL[u]
     if t in _PUNCT:
         return _PUNCT[t]
+    if u in _NUMPAD:
+        return _NUMPAD[u]
     return None
 
 def _mods_from_xplane(modifier: str) -> list[str]:
@@ -46,14 +59,40 @@ def _mods_from_xplane(modifier: str) -> list[str]:
     return [m.strip().upper() for m in modifier.split("+") if m.strip()]
 
 def _split_command(command: str):
-    """sim/flight_controls/flaps_up -> ('Flight Controls', 'Flaps Up')"""
-    s = command.replace("sim/", "")
-    parts = [p for p in s.split("/") if p]
+    """
+    Split a command path into (category, label).
+    Built-in:  sim/flight_controls/flaps_up   -> ('Flight Controls', 'Flaps Up')
+    Plugin:    SRS/X-Camera/Toggle_Pan_Speed  -> ('X-Camera', 'Toggle Pan Speed')
+    Plugin 2:  FlyWithLua/WindVane/toggle_wind -> ('WindVane', 'Toggle Wind')
+    Short:     walkaround/move_back           -> ('Walkaround', 'Move Back')
+    """
+    parts = [p for p in command.split("/") if p]
     if not parts:
-        return "Sim", command
-    cat = parts[0].replace("_", " ").title()
-    tail = " ".join(p.replace("_", " ").title() for p in parts[1:])
-    return cat, (tail if tail else cat)
+        return "Unknown", command
+
+    if parts[0].lower() == "sim":
+        # built-in: skip "sim", first remaining part = category, rest = label
+        parts = parts[1:]
+        if not parts:
+            return "Sim", command
+        cat = parts[0].replace("_", " ").title()
+        tail = " ".join(p.replace("_", " ").title() for p in parts[1:])
+        return cat, (tail if tail else cat)
+
+    # plugin command: skip vendor/plugin name (first part), use second as category
+    if len(parts) >= 3:
+        # e.g. SRS/X-Camera/Toggle -> cat="X-Camera", label="Toggle"
+        cat = parts[1].replace("_", " ").title()
+        tail = " ".join(p.replace("_", " ").title() for p in parts[2:])
+        return cat, (tail if tail else cat)
+    elif len(parts) == 2:
+        # e.g. walkaround/move_back -> cat="Walkaround", label="Move Back"
+        cat = parts[0].replace("_", " ").title()
+        label = parts[1].replace("_", " ").title()
+        return cat, label
+    else:
+        cat = parts[0].replace("_", " ").title()
+        return cat, cat
 
 # -------- main parser --------
 
@@ -71,42 +110,34 @@ def read_prf_file(file_path: str):
             continue
 
         toks = re.split(r"\s+", s)  # any whitespace
-        # search for 'sim/...' token
+        # search for first command token (any path with '/')
+        # skip version line ("1005 Version") and similar non-binding lines
         try:
-            sim_idx = next(i for i, t in enumerate(toks) if t.startswith("sim/"))
+            cmd_idx = next(i for i, t in enumerate(toks)
+                          if "/" in t and not _is_modifier(t))
         except StopIteration:
             continue  # not a keyboard binding
 
-        command = toks[sim_idx]
-        others = toks[:sim_idx] + toks[sim_idx+1:]
+        command = toks[cmd_idx]
+        # tokens before command are key + modifier; tokens after are description (ignored)
+        before = toks[:cmd_idx]
 
         key = None
         modifier = "<NONE>"
 
-        if len(others) == 2:
-            a, b = others
+        if len(before) == 2:
+            a, b = before
             if _is_modifier(a) and not _is_modifier(b):
                 modifier, key = a, b
             elif _is_modifier(b) and not _is_modifier(a):
                 key, modifier = a, b
             else:
-                # heuristic: the one that looks like main key stays as key
                 key = b if _canon_key(b) else _canon_key(a) and a or b
-        elif len(others) == 1:
-            if _is_modifier(others[0]):
-                modifier = others[0]
+        elif len(before) == 1:
+            if _is_modifier(before[0]):
+                modifier = before[0]
             else:
-                key = others[0]
-        else:
-            # classic fallback: key mod sim/... or key sim/...
-            m = re.match(r'^\s*(\S+)\s+(\S+)\s+(sim/.*)$', s)
-            if m:
-                key, modifier, command = m.groups()
-            else:
-                m2 = re.match(r'^\s*(\S+)\s+(sim/.*)$', s)
-                if m2:
-                    key, command = m2.groups()
-                    modifier = "<NONE>"
+                key = before[0]
 
         if not key:
             continue
