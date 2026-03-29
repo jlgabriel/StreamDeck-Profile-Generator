@@ -1,6 +1,6 @@
 # Stream Deck Profile Generator
 
-**v0.9.0** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
+**v0.9.1** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
 
 ![Stream Deck Profile Generator](app/assets/icon.png)
 
@@ -52,7 +52,7 @@
 
 ### Parser Details
 
-- **X-Plane 12**: Reads `.prf` files and extracts `sim/*` command bindings with modifiers (CTRL, ALT, SHIFT). Converts command paths into readable categories and labels.
+- **X-Plane 12**: Reads `.prf` files and extracts keyboard bindings with modifiers (CTRL, ALT, SHIFT). Supports both built-in `sim/` commands and third-party plugin commands (X-Camera, FlyWithLua, A Better Camera, etc.). Includes numpad key support. Converts command paths into readable categories and labels.
 
 - **MSFS 2024**: Parses XML inputprofile files exported from the simulator. Maps Windows VK codes to standard key names, organizes by Context (ATC, Cockpit Camera, Drone, etc.), and preserves acronyms (ATC, EFB, VR, HUD) in labels.
 
