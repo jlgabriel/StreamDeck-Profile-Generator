@@ -164,7 +164,7 @@ All parsers output a standardized console message: `"SimName: parsed N keyboard 
 - `PreviewWindow` (Toplevel) — resizable floating modal window showing the device grid
   - Replicates pagination logic from `_export_with_pages()` into slot arrays
   - **2-column grid layout**: pages arranged in 2×N grid (side by side) for better overview
-  - Window is **resizable** with scrollable content area
+  - Window is **resizable** with both vertical and horizontal scrollbars (Shift+wheel for horizontal)
   - Canvas-based rendering: item cells (dark), nav button cells (gray), empty cells
   - **Drag & drop swap**: click item → drag → release on target to swap positions
   - Cross-page drag supported via `winfo_containing()` for root coordinate mapping
