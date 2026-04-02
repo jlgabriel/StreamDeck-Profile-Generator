@@ -132,9 +132,11 @@ class PreviewWindow(tk.Toplevel):
         num_pages = len(self.page_slots)
         self._grid_cols = 2 if num_pages >= 2 else 1
 
-        # Scrollable container for pages
+        # Scrollable container for pages (both axes)
         container = ttk.Frame(self)
         container.pack(fill=BOTH, expand=True)
+        container.rowconfigure(0, weight=1)
+        container.columnconfigure(0, weight=1)
 
         # Calculate content size for 2-column layout
         grid_rows = (num_pages + self._grid_cols - 1) // self._grid_cols
@@ -145,19 +147,27 @@ class PreviewWindow(tk.Toplevel):
         outer_canvas = tk.Canvas(container, highlightthickness=0)
         scrollbar_y = ttk.Scrollbar(container, orient=VERTICAL,
                                     command=outer_canvas.yview)
-        outer_canvas.configure(yscrollcommand=scrollbar_y.set)
-        scrollbar_y.pack(side=RIGHT, fill=Y)
-        outer_canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        scrollbar_x = ttk.Scrollbar(container, orient=HORIZONTAL,
+                                    command=outer_canvas.xview)
+        outer_canvas.configure(yscrollcommand=scrollbar_y.set,
+                               xscrollcommand=scrollbar_x.set)
+
+        outer_canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar_y.grid(row=0, column=1, sticky="ns")
+        scrollbar_x.grid(row=1, column=0, sticky="ew")
 
         inner_frame = ttk.Frame(outer_canvas)
         self._inner_window = outer_canvas.create_window((0, 0), window=inner_frame, anchor="nw")
         inner_frame.bind("<Configure>",
                          lambda e: outer_canvas.configure(
                              scrollregion=outer_canvas.bbox("all")))
-        # Mouse wheel scrolling
+        # Mouse wheel scrolling (vertical normal, horizontal with Shift)
         def _on_mousewheel(event):
             outer_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        def _on_shift_mousewheel(event):
+            outer_canvas.xview_scroll(int(-1 * (event.delta / 120)), "units")
         outer_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        outer_canvas.bind_all("<Shift-MouseWheel>", _on_shift_mousewheel)
         self._scroll_canvas = outer_canvas
         pages_parent = inner_frame
 
@@ -432,6 +442,7 @@ class PreviewWindow(tk.Toplevel):
     def _close(self):
         if self._scroll_canvas:
             self._scroll_canvas.unbind_all("<MouseWheel>")
+            self._scroll_canvas.unbind_all("<Shift-MouseWheel>")
         self.grab_release()
         self.destroy()
         self.parent._preview_window = None
