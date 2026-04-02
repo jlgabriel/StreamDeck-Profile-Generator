@@ -322,7 +322,7 @@ class MainWindow(ttk.Window):
         font_bar.pack(side=TOP, fill=X)
 
         ttk.Label(font_bar, text="Font:").pack(side=LEFT, padx=4)
-        self.font_family = ttk.Combobox(font_bar, values=["", "Verdana", "Tahoma", "Arial", "Segoe UI", "Calibri", "Consolas"], width=12)
+        self.font_family = ttk.Combobox(font_bar, values=["", "Verdana", "Tahoma", "Trebuchet MS", "Arial", "Segoe UI", "Calibri", "Consolas"], width=14)
         self.font_family.set("")
         self.font_family.pack(side=LEFT)
         ToolTip(self.font_family, "Global font family for all buttons.\nEmpty = Stream Deck default.")

@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## Project Overview
-Stream Deck Profile Generator v0.9.0 — a Python GUI + CLI tool that reads flight simulator keybindings and generates Elgato Stream Deck profile files (.streamDeckProfile) in V3 format (compatible with Stream Deck software v7.3+).
+Stream Deck Profile Generator v0.9.2 — a Python GUI + CLI tool that reads flight simulator keybindings and generates Elgato Stream Deck profile files (.streamDeckProfile) in V3 format (compatible with Stream Deck software v7.3+).
 
 ## Tech Stack
 - **Python 3.8+** with `ttkbootstrap` (themed tkinter) for the GUI
@@ -161,9 +161,10 @@ All parsers output a standardized console message: `"SimName: parsed N keyboard 
 
 ### Preview Window (preview.py)
 - `PreviewItem` — lightweight dataclass copy of a Treeview row (iid, label, keystroke, text_color, split_label)
-- `PreviewWindow` (Toplevel) — floating modal window showing the device grid
+- `PreviewWindow` (Toplevel) — resizable floating modal window showing the device grid
   - Replicates pagination logic from `_export_with_pages()` into slot arrays
-  - All pages visible simultaneously, stacked vertically with scroll
+  - **2-column grid layout**: pages arranged in 2×N grid (side by side) for better overview
+  - Window is **resizable** with scrollable content area
   - Canvas-based rendering: item cells (dark), nav button cells (gray), empty cells
   - **Drag & drop swap**: click item → drag → release on target to swap positions
   - Cross-page drag supported via `winfo_containing()` for root coordinate mapping

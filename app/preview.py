@@ -65,7 +65,7 @@ class PreviewWindow(tk.Toplevel):
         self._build_ui()
 
         self.title(f"Preview — {self.cols}×{self.rows}")
-        self.resizable(False, False)
+        self.resizable(True, True)
         self.protocol("WM_DELETE_WINDOW", self._cancel)
         self.transient(parent)
         self.grab_set()
@@ -128,43 +128,48 @@ class PreviewWindow(tk.Toplevel):
         canvas_w = self.cols * (CELL_SIZE + CELL_GAP) + CELL_GAP
         canvas_h = self.rows * (CELL_SIZE + CELL_GAP) + CELL_GAP
 
+        # Use 2-column grid layout when there are 2+ pages
+        num_pages = len(self.page_slots)
+        self._grid_cols = 2 if num_pages >= 2 else 1
+
         # Scrollable container for pages
         container = ttk.Frame(self)
         container.pack(fill=BOTH, expand=True)
 
-        total_content_h = len(self.page_slots) * (canvas_h + 30) + 10
+        # Calculate content size for 2-column layout
+        grid_rows = (num_pages + self._grid_cols - 1) // self._grid_cols
+        total_content_h = grid_rows * (canvas_h + 40) + 10
+        total_content_w = self._grid_cols * (canvas_w + 24) + 10
         max_h = min(700, total_content_h)
 
-        if total_content_h > max_h:
-            outer_canvas = tk.Canvas(container, width=canvas_w + 20,
-                                     height=max_h, highlightthickness=0)
-            scrollbar = ttk.Scrollbar(container, orient=VERTICAL,
-                                      command=outer_canvas.yview)
-            outer_canvas.configure(yscrollcommand=scrollbar.set)
-            scrollbar.pack(side=RIGHT, fill=Y)
-            outer_canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        outer_canvas = tk.Canvas(container, highlightthickness=0)
+        scrollbar_y = ttk.Scrollbar(container, orient=VERTICAL,
+                                    command=outer_canvas.yview)
+        outer_canvas.configure(yscrollcommand=scrollbar_y.set)
+        scrollbar_y.pack(side=RIGHT, fill=Y)
+        outer_canvas.pack(side=LEFT, fill=BOTH, expand=True)
 
-            inner_frame = ttk.Frame(outer_canvas)
-            outer_canvas.create_window((0, 0), window=inner_frame, anchor="nw")
-            inner_frame.bind("<Configure>",
-                             lambda e: outer_canvas.configure(
-                                 scrollregion=outer_canvas.bbox("all")))
-            # Mouse wheel scrolling
-            def _on_mousewheel(event):
-                outer_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-            outer_canvas.bind_all("<MouseWheel>", _on_mousewheel)
-            self._scroll_canvas = outer_canvas
-            pages_parent = inner_frame
-        else:
-            pages_parent = container
-            self._scroll_canvas = None
+        inner_frame = ttk.Frame(outer_canvas)
+        self._inner_window = outer_canvas.create_window((0, 0), window=inner_frame, anchor="nw")
+        inner_frame.bind("<Configure>",
+                         lambda e: outer_canvas.configure(
+                             scrollregion=outer_canvas.bbox("all")))
+        # Mouse wheel scrolling
+        def _on_mousewheel(event):
+            outer_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        outer_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        self._scroll_canvas = outer_canvas
+        pages_parent = inner_frame
 
         self._canvases = []
         for page_idx, slots in enumerate(self.page_slots):
+            grid_r = page_idx // self._grid_cols
+            grid_c = page_idx % self._grid_cols
+
             lf = ttk.LabelFrame(pages_parent,
                                 text=f"  Page {page_idx + 1}  ",
                                 padding=4)
-            lf.pack(padx=8, pady=(8, 0), fill=X)
+            lf.grid(row=grid_r, column=grid_c, padx=8, pady=(8, 0), sticky="n")
 
             c = tk.Canvas(lf, width=canvas_w, height=canvas_h,
                           bg="#1a1a1a", highlightthickness=0)
@@ -182,7 +187,14 @@ class PreviewWindow(tk.Toplevel):
         if self.overflow_count > 0:
             ttk.Label(pages_parent,
                       text=f"{self.overflow_count} items not shown (exceeds page capacity)",
-                      foreground="orange").pack(pady=(4, 0))
+                      foreground="orange").grid(row=grid_rows, column=0,
+                                                columnspan=self._grid_cols, pady=(4, 0))
+
+        # Set initial window size
+        self.update_idletasks()
+        win_w = min(total_content_w + 40, self.winfo_screenwidth() - 100)
+        win_h = min(max_h + 60, self.winfo_screenheight() - 100)
+        self.geometry(f"{win_w}x{win_h}")
 
         # Bottom button bar
         btn_bar = ttk.Frame(self, padding=8)

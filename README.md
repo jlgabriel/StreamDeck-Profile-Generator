@@ -1,6 +1,6 @@
 # Stream Deck Profile Generator
 
-**v0.9.1** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
+**v0.9.2** — A Python desktop application (GUI + CLI) that reads flight simulator keybindings and generates Elgato Stream Deck profile files (`.streamDeckProfile`) in **V3 format**, compatible with Stream Deck software v7.3+.
 
 ![Stream Deck Profile Generator](app/assets/icon.png)
 
@@ -37,7 +37,8 @@
 - **CLI mode** for batch or automated profile generation
 - **Key validation** with modifier normalization
 - **Optional category in labels** — prepend category to button labels on import (e.g., "Flaps Up" → "Flight Controls - Flaps Up")
-- **Visual preview window** — see your Stream Deck layout before exporting, with all pages displayed simultaneously
+- **Visual preview window** — see your Stream Deck layout before exporting, with pages displayed in a 2-column grid
+- **Resizable preview** — resize the preview window freely; pages arrange in a 2×N grid for better overview
 - **Drag & drop reordering** — swap button positions visually in the preview grid, including across pages
 - **Settings persistence** — saves preferences between sessions
 
@@ -118,7 +119,7 @@ python -m app --input keys.csv --output profile.streamDeckProfile --device xl
 | `--device` | `mini`, `mk2`, `xl`, `generic` | `xl` |
 | `--max-pages` | Maximum pages (1-10) | `10` |
 | `--text-alignment` | `bottom`, `middle`, `top` | `middle` |
-| `--font-family` | Font name (e.g., `Arial`, `Verdana`) | System |
+| `--font-family` | Font name (e.g., `Arial`, `Trebuchet MS`) | System |
 | `--font-size` | Font size in px (6-24) | `12` |
 | `--font-style` | `Regular`, `Bold`, `Italic`, `Bold Italic` | — |
 | `--font-underline` | Enable underline | Disabled |
